@@ -11,11 +11,69 @@ public class PlayerController : MonoBehaviour
 
     // 내가 cell 기준으로 어떤 cell에 위치해 있는지?
     Vector3Int _cellPos = Vector3Int.zero;
-    MoveDir _dir = MoveDir.None;
     bool _isMoving = false;
+    Animator _animator;
+
+    MoveDir _dir = MoveDir.Down; // 어떤 애니메이션을 틀어줄지와 밀접한 관계가 있다.
+    public MoveDir Dir
+    {
+        get { return _dir; }
+        set 
+        {
+            if (_dir == value)
+                return;
+
+            switch (value)
+            {
+                case MoveDir.Up:
+                    _animator.Play("WALK_BACK");
+                    transform.localScale = new Vector3(1.0f, 1.0f, 1.0f); // 왼쪽때문에
+                    break;
+                case MoveDir.Down:
+                    _animator.Play("WALK_FRONT");
+                    transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+                    break;
+                case MoveDir.Left:
+                    _animator.Play("WALK_RIGHT"); // 플레이어의 scale을 건들면 반전됨.
+                    transform.localScale = new Vector3(-1.0f, 1.0f, 1.0f);
+                    break;
+                case MoveDir.Right:
+                    _animator.Play("WALK_RIGHT");
+                    transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+                    break;
+                case MoveDir.None:
+                    // 서버입장에서는 멈췄냐가 문제지 어느방향으로 가다가 멈췄는지는 관심이 없다
+                    // 바뀌기 직전의 _dir을 받아다가 씀.
+                    if (_dir == MoveDir.Up)
+                    {
+                        _animator.Play("IDLE_BACK");
+                        transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+                    }
+                    else if(_dir == MoveDir.Down)
+                    {
+                        _animator.Play("IDLE_FRONT");
+                        transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+                    }
+                    else if (_dir == MoveDir.Left)
+                    {
+                        _animator.Play("IDLE_RIGHT");
+                        transform.localScale = new Vector3(-1.0f, 1.0f, 1.0f); // 아까랑 동일
+                    }
+                    else
+                    {
+                        _animator.Play("IDLE_RIGHT");
+                        transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+                    }
+                    break;
+            }
+
+            _dir = value;
+        }
+    }
 
     void Start()
     {
+        _animator = GetComponent<Animator>();
         // _cellPos에 따른 내 위치를 잡는다 
 
         // 당장은 내 위치가 cell과 world가 1대1 대응이 되지만
@@ -64,7 +122,7 @@ public class PlayerController : MonoBehaviour
         if (_isMoving == false)
         {
             // 움직이는 중이 아니라면 -> 움직일수있다
-            switch (_dir)
+            switch (Dir)
             {
                 case MoveDir.None:
                     break;
@@ -92,33 +150,29 @@ public class PlayerController : MonoBehaviour
 
     // Time.deltaTime 곱하는 이유는 기기 frame에 따라 이동량이 달라지는 경우를 막기 위해
     // 캐릭터는 맵의 한칸 단위로 움직인다
-    // 실제적으로 이동시키는게 아니라 방향만 지정
+    // 키보드 입력 : 직접 이동시키는게 아니라 방향만 정해줌
     void GetDirInput()
     {
         if (Input.GetKey(KeyCode.W))
         {
-            //transform.position += Vector3.up * Time.deltaTime * _speed;
-            _dir = MoveDir.Up;
+            Dir = MoveDir.Up;
         }
         else if (Input.GetKey(KeyCode.S))
         {
-            //transform.position += Vector3.down * Time.deltaTime * _speed;
-            _dir = MoveDir.Down;
+            Dir = MoveDir.Down;
         }
         else if (Input.GetKey(KeyCode.A))
         {
-            //transform.position += Vector3.left * Time.deltaTime * _speed;
-            _dir = MoveDir.Left;
+            Dir = MoveDir.Left;
         }
         else if (Input.GetKey(KeyCode.D))
         {
-            //transform.position += Vector3.right * Time.deltaTime * _speed;
-            _dir = MoveDir.Right;
-        }
+            Dir = MoveDir.Right;
+        } 
         else
         {
             // 정지
-            _dir = MoveDir.None;
+            Dir = MoveDir.None;
         }
     }
 }
