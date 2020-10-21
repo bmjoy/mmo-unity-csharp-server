@@ -6,7 +6,7 @@ using static Define;
 
 public class PlayerController : MonoBehaviour
 {
-    public Grid _grid; // 플레이어가 위치한 맵의 그리드를 받는다.
+    //public Grid _grid; // 플레이어가 위치한 맵의 그리드를 받는다.
     public float _speed = 5.0f;
 
     // 내가 cell 기준으로 어떤 cell에 위치해 있는지?
@@ -79,7 +79,7 @@ public class PlayerController : MonoBehaviour
         // 당장은 내 위치가 cell과 world가 1대1 대응이 되지만
         // 캐릭터 사이즈가 cell 사이즈보다 커지면 이렇게 하는게 나음
         // Vector3(0.5f, 0.5f) 값은 캐릭터가 셀 안에 들어가게 하기 위한 보정치
-        Vector3 pos = _grid.CellToWorld(_cellPos) + new Vector3(0.5f, 0.5f);
+        Vector3 pos = Managers.Map.CurrentGrid.CellToWorld(_cellPos) + new Vector3(0.5f, 0.5f);
         transform.position = pos;
     }
 
@@ -90,6 +90,12 @@ public class PlayerController : MonoBehaviour
         UpdateIsMoving(); // 입력기준으로 이동
     }
 
+    void LateUpdate()
+    {
+        // 카메라 (2D 게임의 경우 카메라의 기본 z좌표는 -10으로 고정임)
+        Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, -10);
+    }
+
     // 스르륵 이동 처리
     private void UpdatePosition()
     {
@@ -97,7 +103,7 @@ public class PlayerController : MonoBehaviour
             return;
 
         // 서버기준으로는 이미 _cellPos에 이동해있는 상황임
-        Vector3 destPos = _grid.CellToWorld(_cellPos) + new Vector3(0.5f, 0.5f);
+        Vector3 destPos = Managers.Map.CurrentGrid.CellToWorld(_cellPos) + new Vector3(0.5f, 0.5f);
         Vector3 moveDir = destPos - transform.position; // 방향벡터 구하기
 
         // 도착 여부 체크
@@ -119,31 +125,31 @@ public class PlayerController : MonoBehaviour
     // 이동 가능한 상태일 때, 실제로 이동
     private void UpdateIsMoving()
     {
-        if (_isMoving == false)
+        if (_isMoving == false && _dir != MoveDir.None)
         {
             // 움직이는 중이 아니라면 -> 움직일수있다
+            Vector3Int destPos = _cellPos;
             switch (Dir)
             {
-                case MoveDir.None:
-                    break;
                 case MoveDir.Up:
-                    _cellPos += Vector3Int.up;
-                    _isMoving = true; // 이동 애니메이션이 끝날때까지는 이동불가
+                    destPos += Vector3Int.up;
                     break;
                 case MoveDir.Down:
-                    _cellPos += Vector3Int.down;
-                    _isMoving = true;
+                    destPos += Vector3Int.down;
                     break;
                 case MoveDir.Left:
-                    _cellPos += Vector3Int.left;
-                    _isMoving = true;
+                    destPos += Vector3Int.left;
                     break;
                 case MoveDir.Right:
-                    _cellPos += Vector3Int.right;
-                    _isMoving = true;
+                    destPos += Vector3Int.right;
                     break;
-                default:
-                    break;
+            }
+
+            // 이제 맵 매니저에게 허락받고 움직여야함
+            if (Managers.Map.CanGo(destPos))
+            {
+                _cellPos = destPos;
+                _isMoving = true;
             }
         }
     }
