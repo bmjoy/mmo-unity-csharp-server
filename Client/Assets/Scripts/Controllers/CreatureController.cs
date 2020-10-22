@@ -11,7 +11,11 @@ public class CreatureController : MonoBehaviour
 
     // 내가 cell 기준으로 어떤 cell에 위치해 있는지?
     // 추후 접근해서 쓸 가능성이 있는 변수들은 protected
-    protected Vector3Int _cellPos = Vector3Int.zero;
+
+    // protected Vector3Int _cellPos = Vector3Int.zero;
+    // ObjectManager에서 끌어다 써야 하므로 public으로 변경
+    public Vector3Int CellPos { get; set; } = Vector3Int.zero;
+    
     // protected bool _isMoving = false;
     protected Animator _animator;
     protected SpriteRenderer _sprite;
@@ -134,7 +138,7 @@ public class CreatureController : MonoBehaviour
         // 당장은 내 위치가 cell과 world가 1대1 대응이 되지만
         // 캐릭터 사이즈가 cell 사이즈보다 커지면 이렇게 하는게 나음
         // Vector3(0.5f, 0.5f) 값은 캐릭터가 셀 안에 들어가게 하기 위한 보정치
-        Vector3 pos = Managers.Map.CurrentGrid.CellToWorld(_cellPos) + new Vector3(0.5f, 0.5f);
+        Vector3 pos = Managers.Map.CurrentGrid.CellToWorld(CellPos) + new Vector3(0.5f, 0.5f);
         transform.position = pos;
     }
 
@@ -152,7 +156,7 @@ public class CreatureController : MonoBehaviour
             return;
 
         // 서버기준으로는 이미 _cellPos에 이동해있는 상황임
-        Vector3 destPos = Managers.Map.CurrentGrid.CellToWorld(_cellPos) + new Vector3(0.5f, 0.5f);
+        Vector3 destPos = Managers.Map.CurrentGrid.CellToWorld(CellPos) + new Vector3(0.5f, 0.5f);
         Vector3 moveDir = destPos - transform.position; // 방향벡터 구하기
 
         // 도착 여부 체크
@@ -182,7 +186,7 @@ public class CreatureController : MonoBehaviour
         if (State == CreatureState.Idle && _dir != MoveDir.None)
         {
             // 움직이는 중이 아니라면 -> 움직일수있다
-            Vector3Int destPos = _cellPos;
+            Vector3Int destPos = CellPos;
             switch (Dir)
             {
                 case MoveDir.Up:
@@ -199,11 +203,22 @@ public class CreatureController : MonoBehaviour
                     break;
             }
 
+            // 움직이는 애니메이션 자체는 충돌여부와 상관이 없게 분리
+            // 충돌이 안났을때만 애니메이션을 틀어주면
+            // 가다가 충돌했을때 다시 그 방향(충돌체가 있는방향)으로 제자리 걸음하는 애니메이션이 안나옴
+            State = CreatureState.Moving;
+
             // 이제 맵 매니저에게 허락받고 움직여야함
             if (Managers.Map.CanGo(destPos))
             {
-                _cellPos = destPos;
-                State = CreatureState.Moving;
+                // ObjectManager의 Find()를 CanGo() 안에서 호출하느냐
+                // 아니면 CanGo()를 호출한대서 같이 호출하느냐 문제가 있는데
+                // Find()가 변경될 여지가 있으므로 CanGo()와 분리시켜 놓는게 좋다고 생각
+                if(Managers.Object.Find(destPos) == null)
+                {
+                    // 충돌 날 물체가 없다.
+                    CellPos = destPos;
+                }
             }
         }
     }
