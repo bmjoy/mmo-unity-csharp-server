@@ -166,6 +166,7 @@ public class PlayerController : CreatureController
         }
     }
 
+    // 플레이어 평타를 맞혔을때
     IEnumerator CoStartPunch()
     {
         // 피격 판정
@@ -173,7 +174,9 @@ public class PlayerController : CreatureController
         GameObject go = Managers.Object.Find(GetFrontCellPos());
         if (go != null)
         {
-            Debug.Log(go.name);
+            CreatureController cc = go.GetComponent<CreatureController>();
+            if (cc != null)
+                cc.OnDamaged();
         }
 
         // 대기 시간

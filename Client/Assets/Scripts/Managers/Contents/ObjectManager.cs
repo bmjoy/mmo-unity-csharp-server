@@ -11,6 +11,7 @@ public class ObjectManager
 
     public void Add(GameObject go)
     {
+        // 팩토리 패턴
         _objects.Add(go);
     }
 

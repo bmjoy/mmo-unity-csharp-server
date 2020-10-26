@@ -62,19 +62,30 @@ public class ArrowController : CreatureController
 
             State = CreatureState.Moving;
 
+            // 화살을 맞혔을 때
             if (Managers.Map.CanGo(destPos))
             {
                 // destPos에 갈수는 있는데 거기 충돌날 오브젝트가 있냐?
-                GameObject go = Managers.Object.Find(destPos);
+                GameObject go = Managers.Object.Find(destPos); // 피격받은 물체
                 if (go == null)
                 {
-                    // 걍고
+                    // 화살을 이동
                     CellPos = destPos;
                 }
                 else
                 {
                     // 화살이 박힘
                     Debug.Log(go.name);
+
+                    // MonsterController인데 왜 CreatureController?
+                    // CreatureController는 MonsterController를 상속받았기 때문에
+                    // OnDamaged 호출시 CreatureController가 오버라이드한거(자기꺼) 호출
+                    // 밖에서 누구든 몹을 때리면 아래처럼 호출하면 됨
+                    CreatureController cc = go.GetComponent<CreatureController>();
+                    if (cc != null)
+                        cc.OnDamaged();
+
+                    // 화살 제거
                     Managers.Resource.Destroy(gameObject);
                 }
             }

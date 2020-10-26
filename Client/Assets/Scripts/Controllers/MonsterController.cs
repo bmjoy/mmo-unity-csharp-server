@@ -45,4 +45,20 @@ public class MonsterController : CreatureController
             Dir = MoveDir.None;
         }
     }
+
+
+    // 얻어맞은쪽에서 처리
+    public override void OnDamaged()
+    {
+        // 사망 이펙트 생성
+        GameObject effect = Managers.Resource.Instantiate("Effect/DieEffect");
+        effect.transform.position = transform.position; // 생성위치는 맞은놈 위치
+        effect.GetComponent<Animator>().Play("START");
+        // 이펙트를 0.5초후에 제거해달라고 예약
+        GameObject.Destroy(effect, 0.5f);
+
+        // 나를 제거
+        Managers.Object.Remove(gameObject);
+        Managers.Resource.Destroy(gameObject);
+    }
 }

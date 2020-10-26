@@ -299,4 +299,16 @@ public class CreatureController : MonoBehaviour
     {
 
     }
+
+    public virtual void OnDamaged() // 누가 어떤식으로 때렸는지 인자 추가 가능
+    {
+        // 피격처리의 책임을 누가 질것인가?
+        // 얻어맞는 쪽이 처리하는게 가장 흔하다.
+
+        // 모두가 얻어맞는건 아니다.
+
+        // OnDamaged 구현을 여기저기 복붙해서 쓸 필요가 없이
+        // CreatureController 상속받은 해당 컨트롤러의 OnDamaged만 수정하면 됨. 
+
+    }
 }
