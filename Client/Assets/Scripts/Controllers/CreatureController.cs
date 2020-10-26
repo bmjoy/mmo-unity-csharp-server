@@ -22,7 +22,7 @@ public class CreatureController : MonoBehaviour
 
     // 만약 스킬을 쓸 때 이동하면 안된다고 치면.. 또 bool을 늘릴까? isSkill isJump isCinematic..?
     // 상태관리용도의 bool은 최소한으로 유지한다 State로 관리하는게 나음.. Define.cs
-    CreatureState _state = CreatureState.Idle;
+    protected CreatureState _state = CreatureState.Idle;
     // State가 변화하면 애니메이션도 같이 변할 확률이 매우 크다.
     public CreatureState State
     {
@@ -38,8 +38,8 @@ public class CreatureController : MonoBehaviour
         }
     }
 
-    MoveDir _lastDir = MoveDir.Down; // Idle 상태일때 틀어줄 애니메이션을 결정, UpdateAnimation 추가하면서 이게 필요해짐
-    MoveDir _dir = MoveDir.Down; // 어떤 애니메이션을 틀어줄지와 밀접한 관계가 있다.
+    protected MoveDir _lastDir = MoveDir.Down; // Idle 상태일때 틀어줄 애니메이션을 결정, UpdateAnimation 추가하면서 이게 필요해짐
+    protected MoveDir _dir = MoveDir.Down; // 어떤 애니메이션을 틀어줄지와 밀접한 관계가 있다.
     public MoveDir Dir
     {
         get { return _dir; }
@@ -135,6 +135,7 @@ public class CreatureController : MonoBehaviour
         }
         else if (_state == CreatureState.Skill)
         {
+            // 이제 스킬에 따라 여러가지 애니메이션이 나온다.
             // 내가 스킬쓰기 직전까지 바라보고 있던 방향으로 스킬이 시전되어야 한다
             switch (_lastDir) 
             {
@@ -218,11 +219,11 @@ public class CreatureController : MonoBehaviour
     protected virtual void UpdateIdle()
     {
         // 움직이지 않을때만
-        if (State == CreatureState.Idle && _dir != MoveDir.None)
+        if (_dir != MoveDir.None)
         {
             // 움직이는 중이 아니라면 -> 움직일수있다
             Vector3Int destPos = CellPos;
-            switch (Dir)
+            switch (_dir)
             {
                 case MoveDir.Up:
                     destPos += Vector3Int.up;
