@@ -104,7 +104,6 @@ public class PlayerController : CreatureController
         {
             case CreatureState.Idle:
                 GetDirInput();
-                GetIdleInput();
                 break;
             case CreatureState.Moving:
                 GetDirInput();
@@ -119,6 +118,31 @@ public class PlayerController : CreatureController
     {
         // 카메라 (2D 게임의 경우 카메라의 기본 z좌표는 -10으로 고정임)
         Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, -10);
+    }
+
+    // 스킬 전담 클래스가 따로 있는게 낫다.
+    // 스킬 사용중에는 상태변화를 막고 싶은데 시간 기준으로 한다 치면 어떻게 시간을 카운트?
+    // 1. Update()
+    // 2. Coroutine
+    protected override void UpdateIdle()
+    {
+        // 이동 상태로 바뀔건지 확인
+        if(Dir != MoveDir.None)
+        {
+            State = CreatureState.Moving; // UpdateMoving()으로 넘어감
+            return;
+        }
+
+        // 이동상태로 바뀔게 아니면 스킬 사용 가능한 상태가 됨.
+        // 스킬은 Idle 상태일때만 사용가능
+        // GetDirInput()에 있던 것을 분리
+        if (Input.GetKey(KeyCode.Space))
+        {
+            State = CreatureState.Skill; // UpdateAnimation은 알아서 불러줄거임
+            // 0.5초 후에 스킬시전상태(CreatureState.Skill)를 푼다
+            // _coSkill = StartCoroutine("CoStartPunch"); 
+            _coSkill = StartCoroutine("CoStartShootArrow");
+        }
     }
 
     // Time.deltaTime 곱하는 이유는 기기 frame에 따라 이동량이 달라지는 경우를 막기 위해
@@ -146,23 +170,6 @@ public class PlayerController : CreatureController
         {
             // 정지
             Dir = MoveDir.None;
-        }
-    }
-
-    // 스킬 전담 클래스가 따로 있는게 낫다.
-    // 스킬 사용중에는 상태변화를 막고 싶은데 시간 기준으로 한다 치면 어떻게 시간을 카운트?
-    // 1. Update()
-    // 2. Coroutine
-    private void GetIdleInput()
-    {
-        // 스킬(임시)
-        // GetDirInput()에 있던 것을 분리
-        if (Input.GetKey(KeyCode.Space))
-        {
-            State = CreatureState.Skill; // UpdateAnimation은 알아서 불러줄거임
-            // 0.5초 후에 스킬시전상태(CreatureState.Skill)를 푼다
-            // _coSkill = StartCoroutine("CoStartPunch"); 
-            _coSkill = StartCoroutine("CoStartShootArrow");
         }
     }
 

@@ -7,6 +7,7 @@ using static Define;
 public class CreatureController : MonoBehaviour
 {
     //public Grid _grid; // 플레이어가 위치한 맵의 그리드를 받는다.
+    [SerializeField]
     public float _speed = 5.0f;
 
     // 내가 cell 기준으로 어떤 cell에 위치해 있는지?
@@ -22,9 +23,10 @@ public class CreatureController : MonoBehaviour
 
     // 만약 스킬을 쓸 때 이동하면 안된다고 치면.. 또 bool을 늘릴까? isSkill isJump isCinematic..?
     // 상태관리용도의 bool은 최소한으로 유지한다 State로 관리하는게 나음.. Define.cs
+    [SerializeField]
     protected CreatureState _state = CreatureState.Idle;
     // State가 변화하면 애니메이션도 같이 변할 확률이 매우 크다.
-    public CreatureState State
+    public virtual CreatureState State
     {
         get { return _state; }
         set
@@ -39,6 +41,7 @@ public class CreatureController : MonoBehaviour
     }
 
     protected MoveDir _lastDir = MoveDir.Down; // Idle 상태일때 틀어줄 애니메이션을 결정, UpdateAnimation 추가하면서 이게 필요해짐
+    [SerializeField]
     protected MoveDir _dir = MoveDir.Down; // 어떤 애니메이션을 틀어줄지와 밀접한 관계가 있다.
     public MoveDir Dir
     {
@@ -214,49 +217,8 @@ public class CreatureController : MonoBehaviour
         }
     }
 
-    // 이동 가능한 상태일 때, 실제로 이동
-    // 재정의 가능하게 바꿈
     protected virtual void UpdateIdle()
     {
-        // 움직이지 않을때만
-        if (_dir != MoveDir.None)
-        {
-            // 움직이는 중이 아니라면 -> 움직일수있다
-            Vector3Int destPos = CellPos;
-            switch (_dir)
-            {
-                case MoveDir.Up:
-                    destPos += Vector3Int.up;
-                    break;
-                case MoveDir.Down:
-                    destPos += Vector3Int.down;
-                    break;
-                case MoveDir.Left:
-                    destPos += Vector3Int.left;
-                    break;
-                case MoveDir.Right:
-                    destPos += Vector3Int.right;
-                    break;
-            }
-
-            // 움직이는 애니메이션 자체는 충돌여부와 상관이 없게 분리
-            // 충돌이 안났을때만 애니메이션을 틀어주면
-            // 가다가 충돌했을때 다시 그 방향(충돌체가 있는방향)으로 제자리 걸음하는 애니메이션이 안나옴
-            State = CreatureState.Moving;
-
-            // 이제 맵 매니저에게 허락받고 움직여야함
-            if (Managers.Map.CanGo(destPos))
-            {
-                // ObjectManager의 Find()를 CanGo() 안에서 호출하느냐
-                // 아니면 CanGo()를 호출한대서 같이 호출하느냐 문제가 있는데
-                // Find()가 변경될 여지가 있으므로 CanGo()와 분리시켜 놓는게 좋다고 생각
-                if (Managers.Object.Find(destPos) == null)
-                {
-                    // 충돌 날 물체가 없다.
-                    CellPos = destPos;
-                }
-            }
-        }
     }
 
     // 스르륵 이동하는 것처럼 보이게 하는 코드
@@ -276,17 +238,72 @@ public class CreatureController : MonoBehaviour
         {
             // 도착
             transform.position = destPos;
+
+            // 이 부분은 MoveToNexPos()가 대체
             // 예외적으로 애니메이션을 직접 컨트롤
             // 키를 계속 누르고 있는 경우에도 계속 Idle 애니메이션이 재생되는 문제때문에 이렇게 함
-            _state = CreatureState.Idle; // _state에 직접 넣으면 UpdateAnimation 호출을 안함
-            if (_dir == MoveDir.None) // 이동키에서 정말로 손을 땠다 (멈춤)
-                UpdateAnimation(); // Idle 애니메이션을 틀어줘
+            //_state = CreatureState.Idle; // _state에 직접 넣으면 UpdateAnimation 호출을 안함
+            //if (_dir == MoveDir.None) // 이동키에서 정말로 손을 땠다 (멈춤)
+            //    UpdateAnimation(); // Idle 애니메이션을 틀어줘
+            
+            // 다음 좌표는 무엇인지? 멈춰야 할지 선택
+            // 오브젝트 타입별로 어떤식의 움직임을 가져갈지도 정한다.
+            MoveToNextPos(); // 다음 목적지로 이동
         }
         else
         {
             // 아직 가는 중
+            // 스르륵 이동 구현부
             transform.position += moveDir.normalized * _speed * Time.deltaTime;
             State = CreatureState.Moving;
+        }
+    }
+
+    protected virtual void MoveToNextPos()
+    {
+        // 내가 키보드 방향키에서 손을 떼면 -> 대기
+        if(_dir == MoveDir.None)
+        {
+            State = CreatureState.Idle;
+            return;
+        }
+
+        // 이동
+        Vector3Int destPos = CellPos;
+        switch (_dir)
+        {
+            case MoveDir.Up:
+                destPos += Vector3Int.up;
+                break;
+            case MoveDir.Down:
+                destPos += Vector3Int.down;
+                break;
+            case MoveDir.Left:
+                destPos += Vector3Int.left;
+                break;
+            case MoveDir.Right:
+                destPos += Vector3Int.right;
+                break;
+        }
+
+        // 움직이는 애니메이션 자체는 충돌여부와 상관이 없게 분리
+        // 충돌이 안났을때만 애니메이션을 틀어주면
+        // 가다가 충돌했을때 다시 그 방향(충돌체가 있는방향)으로 제자리 걸음하는 애니메이션이 안나옴
+
+        // _dir이 None이 아니면 어차피 Moving 상태이고 싶은거니깐 이제 필요없다.
+        // State = CreatureState.Moving;
+
+        // 이제 맵 매니저에게 허락받고 움직여야함
+        if (Managers.Map.CanGo(destPos))
+        {
+            // ObjectManager의 Find()를 CanGo() 안에서 호출하느냐
+            // 아니면 CanGo()를 호출한대서 같이 호출하느냐 문제가 있는데
+            // Find()가 변경될 여지가 있으므로 CanGo()와 분리시켜 놓는게 좋다고 생각
+            if (Managers.Object.Find(destPos) == null)
+            {
+                // 충돌 날 물체가 없다.
+                CellPos = destPos;
+            }
         }
     }
 
