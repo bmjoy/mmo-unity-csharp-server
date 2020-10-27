@@ -5,6 +5,7 @@ using static Define;
 
 public class MonsterController : CreatureController
 {
+    private Coroutine _coSkill;
     private Coroutine _coPatrol;
     private Coroutine _coSearch;
     [SerializeField]
@@ -14,7 +15,13 @@ public class MonsterController : CreatureController
     private GameObject _target; // 추적대상
 
     [SerializeField]
-    private float _searchRange = 5.0f; // 추격범위
+    private float _searchRange = 10.0f; // 추격범위
+
+    [SerializeField]
+    float _skillRange = 1.0f; // 스킬 시전범위
+
+    [SerializeField] 
+    bool _rangedSkill = false; // 근접공격인지 원거리공격인지
 
     public override CreatureState State
     {
@@ -52,6 +59,12 @@ public class MonsterController : CreatureController
         Dir = MoveDir.None;
 
         _speed = 3.0f;
+        _rangedSkill = true; //= (Random.Range(0, 2) == 0 ? true : false); // 몬스터 공격방식 결정
+
+        if (_rangedSkill)
+            _skillRange = 10.0f;
+        else
+            _skillRange = 1.0f;
     }
 
     protected override void UpdateIdle()
@@ -83,11 +96,28 @@ public class MonsterController : CreatureController
         if(_target != null)
         {
             destPos = _target.GetComponent<CreatureController>().CellPos;
+
+            // 스킬 날리는 부분
+            Vector3Int dir = destPos - CellPos; // 방향
+            // (dir.x == 0 || dir.y == 0) 가로나 세로 위치중 하나는 일직선이어야 공격하는 의미가 있다.
+            if (dir.magnitude <= _skillRange && (dir.x == 0 || dir.y == 0))
+            {
+                // 내가 바라보고 있는 방향에 따라 재생할 애니메이션도 변경된다.
+                Dir = GetDirFromVec(dir);
+                State = CreatureState.Skill;
+
+                if(_rangedSkill)
+                    _coSkill = StartCoroutine("CoStartShootArrow");
+                else
+                    _coSkill = StartCoroutine("CoStartPunch");
+
+                return;
+            }
         }
 
         // ignoreDestCollision: true의 의미는 destPos가 못가는 위치여도 일단 그 앞까지는 가야하기 때문
         List<Vector3Int> path = Managers.Map.FindPath(CellPos, destPos, ignoreDestCollision: true);
-        if(path.Count < 2 || (_target && path.Count > 10))
+        if(path.Count < 2 || (_target && path.Count > 20))
         {
             // 타겟이 있는 경우에만 카운트 조건 체크, 10은 하드코딩한거.. 플레이어와 너무 멀어졌다는거임
             // 내 좌표 기준으로 카운트를 세는데 2보다 작으면? 1은 제자리에 있겠다는거고
@@ -100,17 +130,8 @@ public class MonsterController : CreatureController
         Vector3Int nextPos = path[1]; // path[0]은 내 위치임
         Vector3Int moveCellDir = nextPos - CellPos;
 
-        // 애니메이션을 위해서라도 이건 필요
-        if (moveCellDir.x > 0)
-            Dir = MoveDir.Right;
-        else if (moveCellDir.x < 0)
-            Dir = MoveDir.Left;
-        else if (moveCellDir.y > 0)
-            Dir = MoveDir.Up;
-        else if (moveCellDir.y < 0)
-            Dir = MoveDir.Down;
-        else
-            Dir = MoveDir.None;
+        // 바라볼 방향설정
+        Dir = GetDirFromVec(moveCellDir);
 
         // 갈수있나체크
         if (Managers.Map.CanGo(destPos) && Managers.Object.Find(nextPos) == null)
@@ -190,5 +211,39 @@ public class MonsterController : CreatureController
                return true;
            });
         }
+    }
+
+    // 스킬들
+    IEnumerator CoStartPunch()
+    {
+        GameObject go = Managers.Object.Find(GetFrontCellPos());
+        if (go != null)
+        {
+            CreatureController cc = go.GetComponent<CreatureController>();
+            if (cc != null)
+                cc.OnDamaged();
+        }
+
+        // 대기 시간
+        yield return new WaitForSeconds(0.5f);
+        State = CreatureState.Moving;
+        _coSkill = null;
+    }
+
+    IEnumerator CoStartShootArrow()
+    {
+        // 화살 생성
+        GameObject go = Managers.Resource.Instantiate("Creature/Arrow");
+
+        // 내가 바라보는 방향으로 셋팅
+        ArrowController ac = go.GetComponent<ArrowController>(); // null이면 즉시 수정해야하니 체크안함
+        ac.Dir = _lastDir;
+        ac.CellPos = CellPos; // 화살은 내 위치 기준으로 발사
+
+        // 대기 시간
+        yield return new WaitForSeconds(0.3f); // 화살 발사 딜레이
+        // 대기상태로 돌아감. -> 바로 움직이게 바꿈
+        State = CreatureState.Moving;
+        _coSkill = null;
     }
 }

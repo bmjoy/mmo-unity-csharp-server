@@ -167,7 +167,7 @@ public class MapManager
 		Pos pos = Cell2Pos(startCellPos);
 		Pos dest = Cell2Pos(destCellPos);
 
-		// 시작점 발견 (예약 진행)
+		// 시작점 발견 (예약 진행)		
 		open[pos.Y, pos.X] = 10 * (Math.Abs(dest.Y - pos.Y) + Math.Abs(dest.X - pos.X));
 		pq.Push(new PQNode() { F = 10 * (Math.Abs(dest.Y - pos.Y) + Math.Abs(dest.X - pos.X)), G = 0, Y = pos.Y, X = pos.X });
 		parent[pos.Y, pos.X] = new Pos(pos.Y, pos.X);

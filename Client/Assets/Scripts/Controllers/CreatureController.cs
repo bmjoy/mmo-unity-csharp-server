@@ -59,6 +59,20 @@ public class CreatureController : MonoBehaviour
         }
     }
 
+    public MoveDir GetDirFromVec(Vector3Int dir)
+    {
+        if (dir.x > 0)
+            return Dir = MoveDir.Right;
+        else if (dir.x < 0)
+            return Dir = MoveDir.Left;
+        else if (dir.y > 0)
+            return Dir = MoveDir.Up;
+        else if (dir.y < 0)
+            return Dir = MoveDir.Down;
+        else
+            return Dir = MoveDir.None;
+    }
+
     // 내가 바라보는 방향의 바로 앞 Cell 포지션 (타격처리용)
     // 범위공격인 경우?
     public Vector3Int GetFrontCellPos(int range = 1)
