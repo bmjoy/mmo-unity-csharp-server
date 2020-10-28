@@ -11,6 +11,8 @@ namespace ServerCore
 	{
 		public static readonly int HeaderSize = 2;
 
+		// [size(2)] : 얼만큼 파싱을 할지
+		// [packetId(2)] : 변환할 클래스
 		// [size(2)][packetId(2)][ ... ][size(2)][packetId(2)][ ... ]
 		public sealed override int OnRecv(ArraySegment<byte> buffer)
 		{
