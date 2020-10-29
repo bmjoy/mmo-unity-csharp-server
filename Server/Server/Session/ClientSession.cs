@@ -7,13 +7,15 @@ using System.Threading.Tasks;
 using ServerCore;
 using System.Net;
 using Google.Protobuf.Protocol;
-using static Google.Protobuf.Protocol.Person.Types;
 using Google.Protobuf;
+using Server.Game;
 
 namespace Server
 {
-	class ClientSession : PacketSession
+	public class ClientSession : PacketSession
 	{
+		// 현재 ClientSession에 소속된 플레이어가 누군지 알고있으면 편하다.
+		public Player MyPlayer { get; set; }
 		public int SessionId { get; set; }		
 
 		public void Send(IMessage packet)
@@ -35,7 +37,7 @@ namespace Server
 			byte[] sendBuffer = new byte[size + 4];
 			// BitConverter.GetBytes의 경우 구현이 내부에서 또 byte배열을 할당하기 때문에 문제가 있다.
 			// -> 비트연산을 이용해서 직접 넣으면 되긴 함 
-			Array.Copy(BitConverter.GetBytes(size + 4), 0, sendBuffer, 0, sizeof(ushort));
+			Array.Copy(BitConverter.GetBytes((ushort)(size + 4)), 0, sendBuffer, 0, sizeof(ushort));
 
 			// 메시지의 id를 인자로 받은 packet의 이름을 통해 얻어옴
 			// 미리 id와 패킷의 이름 사이에 규칙을 만들었기 때문에 가능 (S_Chat,SChat)
@@ -51,15 +53,18 @@ namespace Server
 		{
 			Console.WriteLine($"OnConnected : {endPoint}");
 
-			// Google ProtoBuf 테스트
-			S_Chat chat = new S_Chat()
-			{
-				Context = "ㅎㅇㅎㅇㅎㅇㅎㅇ!"
-			};
-			
-			Send(chat); // 전송
+			// 클라이언트가 서버에 접속성공
+			// DB를 긁어 플레이어 정보를 가져와서 클라에 보내주고..
+			MyPlayer = PlayerManager.Instance.Add();
+            {
+				MyPlayer.Info.Name = $"Player_{MyPlayer.Info.PlayerId}";
+				MyPlayer.Info.PosX = 0;
+				MyPlayer.Info.PosY = 0;
+				MyPlayer.Session = this;
+            }
 
-			//Program.Room.Push(() => Program.Room.Enter(this));
+			// 지금 방이 1번방밖에 없다
+			RoomManager.Instance.Find(1).EnterGame(MyPlayer);
 		}
 
 		public override void OnRecvPacket(ArraySegment<byte> buffer)
@@ -69,8 +74,9 @@ namespace Server
 
 		public override void OnDisconnected(EndPoint endPoint)
 		{
-			SessionManager.Instance.Remove(this);
+			RoomManager.Instance.Find(1).LeaveGame(MyPlayer.Info.PlayerId); // 게임룸에서 퇴장
 
+			SessionManager.Instance.Remove(this);
 
 			Console.WriteLine($"OnDisconnected : {endPoint}");
 		}

@@ -7,8 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf;
 using Google.Protobuf.Protocol;
+using Server.Game;
 using ServerCore;
-using static Google.Protobuf.Protocol.Person.Types;
 
 namespace Server
 {
@@ -23,6 +23,8 @@ namespace Server
 
 		static void Main(string[] args)
 		{
+			RoomManager.Instance.Add(); // 서버 시작할때 일단 게임룸 하나 추가
+
 			// DNS (Domain Name System)
 			string host = Dns.GetHostName();
 			IPHostEntry ipHost = Dns.GetHostEntry(host);
