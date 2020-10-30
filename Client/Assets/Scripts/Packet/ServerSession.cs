@@ -1,4 +1,6 @@
-﻿using ServerCore;
+﻿using Google.Protobuf;
+using Google.Protobuf.Protocol;
+using ServerCore;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,6 +11,24 @@ using UnityEngine;
 
 public class ServerSession : PacketSession
 {
+	// 서버 프로젝트에 있는것과 똑같다
+	public void Send(IMessage packet)
+	{
+		string msgName = packet.Descriptor.Name.Replace("_", string.Empty);
+		MsgId msgId = (MsgId)Enum.Parse(typeof(MsgId), msgName);
+
+		ushort size = (ushort)packet.CalculateSize(); // packet 사이즈 계산
+
+		byte[] sendBuffer = new byte[size + 4];
+		Array.Copy(BitConverter.GetBytes((ushort)(size + 4)), 0, sendBuffer, 0, sizeof(ushort));
+
+		Array.Copy(BitConverter.GetBytes((ushort)msgId), 0, sendBuffer, 2, sizeof(ushort)); // sendBuffer 위치는 2
+
+		Array.Copy(packet.ToByteArray(), 0, sendBuffer, 4, size); // sendBuffer 위치는 4
+
+		Send(new ArraySegment<byte>(sendBuffer));
+	}
+
 	public override void OnConnected(EndPoint endPoint)
 	{
 		Debug.Log($"OnConnected : {endPoint}");

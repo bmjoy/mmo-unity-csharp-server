@@ -3,6 +3,7 @@ using Google.Protobuf.Protocol;
 using ServerCore;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 class PacketHandler
@@ -43,11 +44,22 @@ class PacketHandler
 		}
 	}
 
+	// 이동패킷
 	public static void S_MoveHandler(PacketSession session, IMessage packet)
 	{
 		S_Move movePacket = packet as S_Move;
 		ServerSession serverSession = session as ServerSession;
 
-		Debug.Log("S_MoveHandler");
+		GameObject go = Managers.Object.FindById(movePacket.PlayerId);
+		if (go == null)
+			return;
+
+		// 정보를 고치기 위해 CreatureController에 접근
+		CreatureController cc = go.GetComponent<CreatureController>();
+		if (cc == null)
+			return; // or crash 
+
+		// 내 이동은 이미 클라에서 처리했는데, 굳이 서버에서 콜백을 받아다가 덮어쓸 이유는 없다.
+		cc.PosInfo = movePacket.PosInfo;
 	}
 }

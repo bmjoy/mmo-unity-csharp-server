@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Google.Protobuf.Protocol;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using static Define;
@@ -82,6 +83,25 @@ public class MyPlayerController : PlayerController
         {
             // 정지
             Dir = MoveDir.None;
+        }
+    }
+
+    // 움직이고 있다는 정보는 내가 조작하고 있는 플레이어만 보내면 된다.
+    protected override void MoveToNextPos()
+    {
+        // 실질적으로 내 좌표가 변할때 서버에 뭔가 요청한다.
+        // 상태변화
+        CreatureState prevState = State;
+        Vector3Int prevCellPos = CellPos;
+
+        base.MoveToNextPos(); // 이동부분 처리는 여기서
+
+        // 이전과 state가 다르거나 cell좌표가 다르면 패킷전송
+        if(prevState != State || CellPos != prevCellPos)
+        {
+            C_Move movePacket = new C_Move();
+            movePacket.PosInfo = PosInfo; // xyz좌표 및 state정보를 한번에
+            Managers.Network.Send(movePacket); // 클라에서 서버로(C_Move) 보내기
         }
     }
 }

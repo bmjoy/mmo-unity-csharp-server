@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Google.Protobuf.Protocol;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using static Define;
@@ -12,12 +13,40 @@ public class CreatureController : MonoBehaviour
     [SerializeField]
     public float _speed = 5.0f;
 
+    PositionInfo _positionInfo = new PositionInfo();
+    public PositionInfo PosInfo
+    {
+        get { return _positionInfo; }
+        set
+        {
+            if (_positionInfo.Equals(value))
+                return;
+
+            // 위치 갱신
+            _positionInfo = value;
+            // 움직이는 애니메이션 재생시작
+            UpdateAnimation(); 
+        }
+    }
+
     // 내가 cell 기준으로 어떤 cell에 위치해 있는지?
     // 추후 접근해서 쓸 가능성이 있는 변수들은 protected
 
     // protected Vector3Int _cellPos = Vector3Int.zero;
     // ObjectManager에서 끌어다 써야 하므로 public으로 변경
-    public Vector3Int CellPos { get; set; } = Vector3Int.zero;
+    public Vector3Int CellPos
+    {
+        get
+        {
+            return new Vector3Int(PosInfo.PosX, PosInfo.PosY, 0);
+        }
+
+        set
+        {
+            PosInfo.PosX = value.x;
+            PosInfo.PosY = value.y;
+        }
+    }
     
     // protected bool _isMoving = false;
     protected Animator _animator;
@@ -25,35 +54,31 @@ public class CreatureController : MonoBehaviour
 
     // 만약 스킬을 쓸 때 이동하면 안된다고 치면.. 또 bool을 늘릴까? isSkill isJump isCinematic..?
     // 상태관리용도의 bool은 최소한으로 유지한다 State로 관리하는게 나음.. Define.cs
-    [SerializeField]
-    protected CreatureState _state = CreatureState.Idle;
     // State가 변화하면 애니메이션도 같이 변할 확률이 매우 크다.
     public virtual CreatureState State
     {
-        get { return _state; }
+        get { return PosInfo.State; }
         set
         {
-            if (_state == value)
+            if (PosInfo.State == value)
                 return;
 
-            _state = value;
+            PosInfo.State = value;
             // 이제 애니메이션을 어케하지
             UpdateAnimation(); // state 바꿨으니 알아서 틀어주셈
         }
     }
 
     protected MoveDir _lastDir = MoveDir.Down; // Idle 상태일때 틀어줄 애니메이션을 결정, UpdateAnimation 추가하면서 이게 필요해짐
-    [SerializeField]
-    protected MoveDir _dir = MoveDir.Down; // 어떤 애니메이션을 틀어줄지와 밀접한 관계가 있다.
     public MoveDir Dir
     {
-        get { return _dir; }
+        get { return PosInfo.MoveDir; }
         set
         {
-            if (_dir == value)
+            if (PosInfo.MoveDir == value)
                 return;
 
-            _dir = value;
+            PosInfo.MoveDir = value;
             if (value != MoveDir.None)
                 _lastDir = value;
 
@@ -105,7 +130,7 @@ public class CreatureController : MonoBehaviour
     protected virtual void UpdateAnimation()
     {
         // switch 문으로 해도 되지만 내부에서 또 switch 쓸거기 때문에 가독성을 위해 if~else로
-        if(_state == CreatureState.Idle)
+        if(State == CreatureState.Idle)
         {
             switch (_lastDir)
             {
@@ -129,10 +154,10 @@ public class CreatureController : MonoBehaviour
                     break;
             }
         }
-        else if(_state == CreatureState.Moving)
+        else if(State == CreatureState.Moving)
         {
             // dir값에 맞는 방향을 바라보면서 걸어가는 애니메이션 재생
-            switch (_dir)
+            switch (Dir)
             {
                 case MoveDir.Up:
                     _animator.Play("WALK_BACK");
@@ -152,7 +177,7 @@ public class CreatureController : MonoBehaviour
                     break;
             }
         }
-        else if (_state == CreatureState.Skill)
+        else if (State == CreatureState.Skill)
         {
             // 이제 스킬에 따라 여러가지 애니메이션이 나온다.
             // 내가 스킬쓰기 직전까지 바라보고 있던 방향으로 스킬이 시전되어야 한다
@@ -278,7 +303,7 @@ public class CreatureController : MonoBehaviour
     protected virtual void MoveToNextPos()
     {
         // 내가 키보드 방향키에서 손을 떼면 -> 대기
-        if(_dir == MoveDir.None)
+        if(Dir == MoveDir.None)
         {
             State = CreatureState.Idle;
             return;
@@ -286,7 +311,7 @@ public class CreatureController : MonoBehaviour
 
         // 이동
         Vector3Int destPos = CellPos;
-        switch (_dir)
+        switch (Dir)
         {
             case MoveDir.Up:
                 destPos += Vector3Int.up;

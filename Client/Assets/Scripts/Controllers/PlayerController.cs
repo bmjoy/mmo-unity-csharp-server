@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Google.Protobuf.Protocol;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,7 +21,7 @@ public class PlayerController : CreatureController
     protected override void UpdateAnimation()
     {
         // switch 문으로 해도 되지만 내부에서 또 switch 쓸거기 때문에 가독성을 위해 if~else로
-        if (_state == CreatureState.Idle)
+        if (State == CreatureState.Idle)
         {
             switch (_lastDir)
             {
@@ -44,10 +45,10 @@ public class PlayerController : CreatureController
                     break;
             }
         }
-        else if (_state == CreatureState.Moving)
+        else if (State == CreatureState.Moving)
         {
             // dir값에 맞는 방향을 바라보면서 걸어가는 애니메이션 재생
-            switch (_dir)
+            switch (Dir)
             {
                 case MoveDir.Up:
                     _animator.Play("WALK_BACK");
@@ -67,7 +68,7 @@ public class PlayerController : CreatureController
                     break;
             }
         }
-        else if (_state == CreatureState.Skill)
+        else if (State == CreatureState.Skill)
         {
             // 이제 스킬에 따라 여러가지 애니메이션이 나온다.
             // 내가 스킬쓰기 직전까지 바라보고 있던 방향으로 스킬이 시전되어야 한다

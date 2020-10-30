@@ -22,7 +22,8 @@ public class ObjectManager
 
             MyPlayer = go.GetComponent<MyPlayerController>();
             MyPlayer.Id = info.PlayerId;
-            MyPlayer.CellPos = new Vector3Int(info.PosX, info.PosY, 0); // CellPos로 좌표 관리중
+            // 이렇게 position에 대한 클래스 하나가 있으면 코드 한줄에 모든 pos 관련 정보를 넣어줄수있다.
+            MyPlayer.PosInfo = info.PosInfo;
         }
         else
         {
@@ -33,7 +34,7 @@ public class ObjectManager
 
             PlayerController pc = go.GetComponent<PlayerController>();
             pc.Id = info.PlayerId;
-            pc.CellPos = new Vector3Int(info.PosX, info.PosY, 0);
+            pc.PosInfo = info.PosInfo;
         }
     }
 
@@ -55,6 +56,13 @@ public class ObjectManager
 
         Remove(MyPlayer.Id);
         MyPlayer = null;
+    }
+
+    public GameObject FindById(int id)
+    {
+        GameObject go = null;
+        _objects.TryGetValue(id, out go);
+        return go;
     }
 
     // 객체가 적다면 그냥저냥 쓸수있음

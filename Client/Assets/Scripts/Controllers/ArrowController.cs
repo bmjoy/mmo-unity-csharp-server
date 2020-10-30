@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Google.Protobuf.Protocol;
+using UnityEngine;
 using static Define;
 
 // 하는 일이 좀 단순함.. 앞으로 나가는거랑 충돌처리
@@ -45,7 +46,7 @@ public class ArrowController : CreatureController
     {
         // 움직이는 중이 아니라면 -> 움직일수있다
         Vector3Int destPos = CellPos;
-        switch (_dir)
+        switch (Dir)
         {
             case MoveDir.Up:
                 destPos += Vector3Int.up;
