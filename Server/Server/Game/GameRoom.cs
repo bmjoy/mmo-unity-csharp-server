@@ -1,4 +1,5 @@
-﻿using Google.Protobuf.Protocol;
+﻿using Google.Protobuf;
+using Google.Protobuf.Protocol;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -82,6 +83,18 @@ namespace Server.Game
                         if(player != p)
                             p.Session.Send(despawnPacket);
                     }
+                }
+            }
+        }
+        public void Broadcast(IMessage packet)
+        {
+            lock (_lock)
+            {
+                // 나중에는 lock대신 job개념으로 할거임..
+                foreach (Player player in _players)
+                {
+                    // 접속한 유저들에게 패킷 뿌려주셈
+                    player.Session.Send(packet);
                 }
             }
         }
