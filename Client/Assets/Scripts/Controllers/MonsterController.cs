@@ -157,7 +157,7 @@ public class MonsterController : CreatureController
         GameObject.Destroy(effect, 0.5f);
 
         // 나를 제거
-        Managers.Object.Remove(gameObject);
+        Managers.Object.Remove(Id);
         Managers.Resource.Destroy(gameObject);
     }
 

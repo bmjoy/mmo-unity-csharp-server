@@ -6,6 +6,8 @@ using static Define;
 // 플레이어나 몬스터 컨트롤러의 공통부분을 여기에
 public class CreatureController : MonoBehaviour
 {
+    public int Id { get; set; } // 아이디는 모든 생성된 플레이어들(몹)이 하나는 갖고 있어야됨
+
     //public Grid _grid; // 플레이어가 위치한 맵의 그리드를 받는다.
     [SerializeField]
     public float _speed = 5.0f;

@@ -1,30 +1,66 @@
-﻿using System;
+﻿using Google.Protobuf.Protocol;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class ObjectManager
 {
-    // 아직 ID도 없으니 이걸로 안함
-    // Dictionary<int, GameObject> _objects = new Dictionary<int, GameObject>();
-    // 리스트로 하자
-    List<GameObject> _objects = new List<GameObject>();
+    // 나 자신(플레이중인 캐릭터)는 접근하기 편하게 한느게 낫다
+    public MyPlayerController MyPlayer { get; set; } 
+    // 딕셔너리 하나에 넣어서 관리해도 되고 종류별로 딕셔너리 늘려도 됨
+    Dictionary<int, GameObject> _objects = new Dictionary<int, GameObject>();
 
-    public void Add(GameObject go)
+    // 생성할 플레이어의 정보, 지금 생성하는 플레이어가 내가 조작하는 플레이어 인가?
+    public void Add(PlayerInfo info, bool myPlayer = false)
     {
-        // 팩토리 패턴
-        _objects.Add(go);
+        if (myPlayer)
+        {
+            GameObject go = Managers.Resource.Instantiate("Creature/MyPlayer");
+            go.name = info.Name;
+            _objects.Add(info.PlayerId, go);
+
+            MyPlayer = go.GetComponent<MyPlayerController>();
+            MyPlayer.Id = info.PlayerId;
+            MyPlayer.CellPos = new Vector3Int(info.PosX, info.PosY, 0); // CellPos로 좌표 관리중
+        }
+        else
+        {
+            // 내가 조작하는 플레이어가 아닌 경우
+            GameObject go = Managers.Resource.Instantiate("Creature/Player");
+            go.name = info.Name;
+            _objects.Add(info.PlayerId, go);
+
+            PlayerController pc = go.GetComponent<PlayerController>();
+            pc.Id = info.PlayerId;
+            pc.CellPos = new Vector3Int(info.PosX, info.PosY, 0);
+        }
     }
 
-    public void Remove(GameObject go)
+    public void Add(int id, GameObject go)
     {
-        _objects.Remove(go);
+        // 팩토리 패턴
+        _objects.Add(id, go);
+    }
+
+    public void Remove(int id)
+    {
+        _objects.Remove(id);
+    }
+
+    public void RemoveMyPlayer()
+    {
+        if (MyPlayer == null)
+            return;
+
+        Remove(MyPlayer.Id);
+        MyPlayer = null;
     }
 
     // 객체가 적다면 그냥저냥 쓸수있음
     public GameObject Find(Vector3Int cellPos)
     {
-        foreach (GameObject obj in _objects)
+        foreach (GameObject obj in _objects.Values)
         {
             CreatureController cc = obj.GetComponent<CreatureController>();
             if (cc == null)
@@ -41,7 +77,7 @@ public class ObjectManager
     public GameObject Find(Func<GameObject, bool> condition)
     {
         // 오브젝트를 던지고 이게 있나 없나 찾아줌
-        foreach (GameObject obj in _objects)
+        foreach (GameObject obj in _objects.Values)
         {
             // 내가 던져준 조건에 부합하는애면 그대로 반환
             if (condition.Invoke(obj))

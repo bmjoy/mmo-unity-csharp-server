@@ -12,6 +12,13 @@ public class ServerSession : PacketSession
 	public override void OnConnected(EndPoint endPoint)
 	{
 		Debug.Log($"OnConnected : {endPoint}");
+
+		// session message id
+		PacketManager.Instance.CustomHandler = (s, m, i) =>
+		{
+			// 일단 패킷큐에 떤지자.. 메인쓰레드 아닌대서 통신하면 터짐
+			PacketQueue.Instance.Push(i, m); 
+		};
 	}
 
 	public override void OnDisconnected(EndPoint endPoint)
