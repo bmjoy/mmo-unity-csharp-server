@@ -89,19 +89,64 @@ public class MyPlayerController : PlayerController
     // 움직이고 있다는 정보는 내가 조작하고 있는 플레이어만 보내면 된다.
     protected override void MoveToNextPos()
     {
-        // 실질적으로 내 좌표가 변할때 서버에 뭔가 요청한다.
-        // 상태변화
-        CreatureState prevState = State;
-        Vector3Int prevCellPos = CellPos;
-
-        base.MoveToNextPos(); // 이동부분 처리는 여기서
-
-        // 이전과 state가 다르거나 cell좌표가 다르면 패킷전송
-        if(prevState != State || CellPos != prevCellPos)
+        // 내가 키보드 방향키에서 손을 떼면 -> 대기
+        if (Dir == MoveDir.None)
         {
+            State = CreatureState.Idle;
+            CheckUpdatedFlag(); // 얘 호출은 일단 해줘야함
+            return;
+        }
+
+        // 이동
+        Vector3Int destPos = CellPos;
+        switch (Dir)
+        {
+            case MoveDir.Up:
+                destPos += Vector3Int.up;
+                break;
+            case MoveDir.Down:
+                destPos += Vector3Int.down;
+                break;
+            case MoveDir.Left:
+                destPos += Vector3Int.left;
+                break;
+            case MoveDir.Right:
+                destPos += Vector3Int.right;
+                break;
+        }
+
+        // 움직이는 애니메이션 자체는 충돌여부와 상관이 없게 분리
+        // 충돌이 안났을때만 애니메이션을 틀어주면
+        // 가다가 충돌했을때 다시 그 방향(충돌체가 있는방향)으로 제자리 걸음하는 애니메이션이 안나옴
+
+        // _dir이 None이 아니면 어차피 Moving 상태이고 싶은거니깐 이제 필요없다.
+        // State = CreatureState.Moving;
+
+        // 이제 맵 매니저에게 허락받고 움직여야함
+        if (Managers.Map.CanGo(destPos))
+        {
+            // ObjectManager의 Find()를 CanGo() 안에서 호출하느냐
+            // 아니면 CanGo()를 호출한대서 같이 호출하느냐 문제가 있는데
+            // Find()가 변경될 여지가 있으므로 CanGo()와 분리시켜 놓는게 좋다고 생각
+            if (Managers.Object.Find(destPos) == null)
+            {
+                // 충돌 날 물체가 없다.
+                CellPos = destPos;
+            }
+        }
+
+        CheckUpdatedFlag();
+    }
+
+    void CheckUpdatedFlag()
+    {
+        if (_updated)
+        {
+            // 정말 갱신사항이 있으면 서버에다가 변경사항을 보냄
             C_Move movePacket = new C_Move();
             movePacket.PosInfo = PosInfo; // xyz좌표 및 state정보를 한번에
             Managers.Network.Send(movePacket); // 클라에서 서버로(C_Move) 보내기
+            _updated = false;
         }
     }
 }

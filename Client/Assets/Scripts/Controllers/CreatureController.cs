@@ -13,6 +13,10 @@ public class CreatureController : MonoBehaviour
     [SerializeField]
     public float _speed = 5.0f;
 
+    // 일종의 dirty flag로서 유저의 cellpos state dir 셋 중 하나라도 변경사항이 있나 체크
+    // 이게 MyPlayerController에서만 쓰는건데 .. 일단 여따넣음
+    protected bool _updated = false;
+
     PositionInfo _positionInfo = new PositionInfo();
     public PositionInfo PosInfo
     {
@@ -22,10 +26,11 @@ public class CreatureController : MonoBehaviour
             if (_positionInfo.Equals(value))
                 return;
 
-            // 위치 갱신
-            _positionInfo = value;
-            // 움직이는 애니메이션 재생시작
-            UpdateAnimation(); 
+            // 위치 갱신 - 여기서 Dir을 덮어버려서 자꾸 멈췄을때 아래만 쳐다봄
+            CellPos = new Vector3Int(value.PosX, value.PosY, 0);
+            State = value.State;
+            Dir = value.MoveDir;
+            // 각 상태가 변경될 때 애니메이션은 알아서 갱신됨
         }
     }
 
@@ -43,8 +48,12 @@ public class CreatureController : MonoBehaviour
 
         set
         {
+            if (PosInfo.PosX == value.x && PosInfo.PosY == value.y)
+                return;
+
             PosInfo.PosX = value.x;
             PosInfo.PosY = value.y;
+            _updated = true;
         }
     }
     
@@ -66,6 +75,7 @@ public class CreatureController : MonoBehaviour
             PosInfo.State = value;
             // 이제 애니메이션을 어케하지
             UpdateAnimation(); // state 바꿨으니 알아서 틀어주셈
+            _updated = true;
         }
     }
 
@@ -83,6 +93,7 @@ public class CreatureController : MonoBehaviour
                 _lastDir = value;
 
             UpdateAnimation();
+            _updated = true;
         }
     }
 
@@ -230,6 +241,13 @@ public class CreatureController : MonoBehaviour
         // Vector3(0.5f, 0.5f) 값은 캐릭터가 셀 안에 들어가게 하기 위한 보정치
         Vector3 pos = Managers.Map.CurrentGrid.CellToWorld(CellPos) + new Vector3(0.5f, 0.5f);
         transform.position = pos;
+
+        // 서버에서 아무값도 안왔다면 하단의 설정대로 하고
+        // 값이 왔으면 그걸로 덮어씌워질거임
+        State = CreatureState.Idle;
+        Dir = MoveDir.None;
+        CellPos = new Vector3Int(0, 0, 0);
+        UpdateAnimation();
     }
 
     // Update에 똑같은거 때려넣지 말고 필요하면 UpdateController()를 재정의
@@ -302,50 +320,10 @@ public class CreatureController : MonoBehaviour
 
     protected virtual void MoveToNextPos()
     {
-        // 내가 키보드 방향키에서 손을 떼면 -> 대기
-        if(Dir == MoveDir.None)
-        {
-            State = CreatureState.Idle;
-            return;
-        }
-
-        // 이동
-        Vector3Int destPos = CellPos;
-        switch (Dir)
-        {
-            case MoveDir.Up:
-                destPos += Vector3Int.up;
-                break;
-            case MoveDir.Down:
-                destPos += Vector3Int.down;
-                break;
-            case MoveDir.Left:
-                destPos += Vector3Int.left;
-                break;
-            case MoveDir.Right:
-                destPos += Vector3Int.right;
-                break;
-        }
-
-        // 움직이는 애니메이션 자체는 충돌여부와 상관이 없게 분리
-        // 충돌이 안났을때만 애니메이션을 틀어주면
-        // 가다가 충돌했을때 다시 그 방향(충돌체가 있는방향)으로 제자리 걸음하는 애니메이션이 안나옴
-
-        // _dir이 None이 아니면 어차피 Moving 상태이고 싶은거니깐 이제 필요없다.
-        // State = CreatureState.Moving;
-
-        // 이제 맵 매니저에게 허락받고 움직여야함
-        if (Managers.Map.CanGo(destPos))
-        {
-            // ObjectManager의 Find()를 CanGo() 안에서 호출하느냐
-            // 아니면 CanGo()를 호출한대서 같이 호출하느냐 문제가 있는데
-            // Find()가 변경될 여지가 있으므로 CanGo()와 분리시켜 놓는게 좋다고 생각
-            if (Managers.Object.Find(destPos) == null)
-            {
-                // 충돌 날 물체가 없다.
-                CellPos = destPos;
-            }
-        }
+        // 플레이어의 좌표를 직접 건드는 부분은 
+        // 내가 조작하는 플레이어에 한해서만 한정한다
+        // 또는 동기화가 크게 중요하지 않은 오브젝트들
+        // ex) 화살
     }
 
     protected virtual void UpdateSkill()

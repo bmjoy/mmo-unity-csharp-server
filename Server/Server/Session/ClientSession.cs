@@ -60,6 +60,7 @@ namespace Server
 				MyPlayer.Info.Name = $"Player_{MyPlayer.Info.PlayerId}";
 				MyPlayer.Info.PosInfo.State = CreatureState.Idle;
 				MyPlayer.Info.PosInfo.MoveDir = MoveDir.None;
+				// 초기값이 0인 경우에는 디버깅할때 값 자체가 안떠서 버그처럼 보이는데 버그는 아님.
 				MyPlayer.Info.PosInfo.PosX = 0;
 				MyPlayer.Info.PosInfo.PosY = 0;
 				MyPlayer.Session = this;
