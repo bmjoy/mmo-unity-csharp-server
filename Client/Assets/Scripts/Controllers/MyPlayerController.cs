@@ -45,6 +45,8 @@ public class MyPlayerController : PlayerController
         // GetDirInput()에 있던 것을 분리
         if (Input.GetKey(KeyCode.Space))
         {
+            // 서버에 나 쓰킬 쓰고싶다고 전송
+            // 서버는 스킬사용체크
             State = CreatureState.Skill; // UpdateAnimation은 알아서 불러줄거임
             // 0.5초 후에 스킬시전상태(CreatureState.Skill)를 푼다
             // _coSkill = StartCoroutine("CoStartPunch"); 

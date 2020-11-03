@@ -122,7 +122,7 @@ public class PlayerController : CreatureController
     // 플레이어 평타를 맞혔을때
     IEnumerator CoStartPunch()
     {
-        // 피격 판정
+        // 피격 판정 -> 이걸 클라에서 처리하나?
         // 내가 바라보고 있는 방향 기준 바로 앞의 좌표
         GameObject go = Managers.Object.Find(GetFrontCellPos());
         if (go != null)

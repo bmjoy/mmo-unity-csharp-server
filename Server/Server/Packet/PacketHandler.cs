@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf;
 using Google.Protobuf.Protocol;
 using Server;
+using Server.Game;
 using ServerCore;
 using System;
 using System.Collections.Generic;
@@ -15,22 +16,38 @@ class PacketHandler
 
 		Console.WriteLine($"C_Move ({movePacket.PosInfo.PosX}, {movePacket.PosInfo.PosY})");
 
-		if (clientSession.MyPlayer == null)
+		// lock 처리 안하고 멀티쓰레드 방어
+
+		Player player = clientSession.MyPlayer; // 내가 꺼내오는 시점의 플레이어를 따로 변수로 뺌
+		if (player == null)
 			return;
-		if (clientSession.MyPlayer.Room == null)
+		// 아래부터는 MyPlayer가 null 아니라고 확신하고 작성한 코드들이지만
+		// 멀티쓰레드일때는 보장할수가 없다.
+		// 그래서 플레이어가 내가 꺼내오는 시점에서 있다면? 따로 변수로 빼놓고 쓰자
+
+		// 만약 다른 쓰레드에서 LeaveGame() 해버리면 null이 아니라고 체크하고 들어가도
+		// 하단에서 터질수가 있음
+		// 그니깐 플레이어처럼 내가 체크하는 시점에서 따로 빼놓음
+		GameRoom room = player.Room;
+		if (room == null)
 			return;
 
-		// 검증
+		room.HandleMove(player, movePacket); // 이동패킷 처리를 안전하게
+	}
 
-		// 일단 서버에서 좌표 이동 처리
-		PlayerInfo info = clientSession.MyPlayer.Info;
-		info.PosInfo = movePacket.PosInfo;
+    public static void C_SkillHandler(PacketSession session, IMessage packet)
+    {
+		C_Skill skillPacket = packet as C_Skill;
+		ClientSession clientSession = session as ClientSession;
 
-		// 다른 플레이어에게도 알려준다
-		S_Move resMovePacket = new S_Move();		
-		resMovePacket.PlayerId = clientSession.MyPlayer.Info.PlayerId; // 움직이는 사람의 id
-		resMovePacket.PosInfo = movePacket.PosInfo;
+		Player player = clientSession.MyPlayer; 
+		if (player == null)
+			return;
 
-		clientSession.MyPlayer.Room.Broadcast(resMovePacket); // 들어와있는 모든 유저에게 알림
+		GameRoom room = player.Room;
+		if (room == null)
+			return;
+
+		room.HandleSkill(player, skillPacket);
 	}
 }
