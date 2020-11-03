@@ -57,7 +57,7 @@ public class MonsterController : CreatureController
         // Init()에서 Animator를 정해주니깐 State나 Dir 값 대입은
         // Init()아래에 있어야 한다.
         State = CreatureState.Idle;
-        Dir = MoveDir.None;
+        Dir = MoveDir.Down; // none 빠졌으니 그냥 아래를 바라보게
 
         _speed = 3.0f;
         _rangedSkill = true; //= (Random.Range(0, 2) == 0 ? true : false); // 몬스터 공격방식 결정
@@ -238,7 +238,7 @@ public class MonsterController : CreatureController
 
         // 내가 바라보는 방향으로 셋팅
         ArrowController ac = go.GetComponent<ArrowController>(); // null이면 즉시 수정해야하니 체크안함
-        ac.Dir = _lastDir;
+        ac.Dir = Dir;
         ac.CellPos = CellPos; // 화살은 내 위치 기준으로 발사
 
         // 대기 시간

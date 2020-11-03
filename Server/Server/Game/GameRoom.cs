@@ -150,7 +150,16 @@ namespace Server.Game
                 Broadcast(skill);
 
                 // 데미지 판정 -> 항상 치팅 대비
-
+                // 내 공격방향에 적이 있나 없나 체크
+                // GetFrontCellPos에 MoveDir.None 처리가 없으니 
+                // 항상 공격자의 위치를 반환해서 아무대나 떄려도 타격이 되는 문제가 있었음
+                // MoveDir.None이 그냥 키입력 여부를 받는거라 서버에는 필요없으므로 전체적으로 없애기로함
+                Vector2Int skillPos = player.GetFrontCellPos(info.PosInfo.MoveDir);
+                Player target = _map.Find(skillPos);
+                if(target != null)
+                {
+                    Console.WriteLine("Hit Player!");
+                }
             }
         }
 

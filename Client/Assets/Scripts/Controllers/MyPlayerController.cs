@@ -7,6 +7,8 @@ using static Define;
 // 내가 조작하고 있는 플레이어에 대한 컨트롤러
 public class MyPlayerController : PlayerController
 {
+    // 키보드 입력여부는 bool 여부로 빼는게 편하다.
+    bool _moveKeyPressed = false; // 키입력에 관한거니깐 내가 조작하는애만 갖고있으면 될듯
     protected override void Init()
     {
         base.Init();
@@ -34,7 +36,7 @@ public class MyPlayerController : PlayerController
     protected override void UpdateIdle()
     {
         // 이동 상태로 바뀔건지 확인
-        if (Dir != MoveDir.None)
+        if (_moveKeyPressed)
         {
             State = CreatureState.Moving; // UpdateMoving()으로 넘어감
             return;
@@ -76,6 +78,8 @@ public class MyPlayerController : PlayerController
     // 키보드 입력 : 직접 이동시키는게 아니라 방향만 정해줌
     void GetDirInput()
     {
+        _moveKeyPressed = true; // 뭔가 키를 눌렀음
+
         if (Input.GetKey(KeyCode.W))
         {
             Dir = MoveDir.Up;
@@ -94,8 +98,9 @@ public class MyPlayerController : PlayerController
         }
         else
         {
-            // 정지
-            Dir = MoveDir.None;
+            // 내가 이동키를 누르고 있지 않음을 표현하고 있는건데 이 정보가 서버에서 필요한가?
+            // Dir = MoveDir.None;
+            _moveKeyPressed = false;
         }
     }
 
@@ -103,7 +108,7 @@ public class MyPlayerController : PlayerController
     protected override void MoveToNextPos()
     {
         // 내가 키보드 방향키에서 손을 떼면 -> 대기
-        if (Dir == MoveDir.None)
+        if (_moveKeyPressed == false)
         {
             State = CreatureState.Idle;
             CheckUpdatedFlag(); // 얘 호출은 일단 해줘야함

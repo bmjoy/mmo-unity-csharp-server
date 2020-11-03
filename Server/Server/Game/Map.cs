@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
+// 여기 들어오기전에 GameRoom 클래스에서 lock 걸고 들어오기 때문에 여기서는 안걸어도 된다.
+
 // 맵 읽어오기 위한 클래스, 서버에서도 맵의 충돌체 정보를 알기 위해
 // 플레이어를 맵 좌표 기준으로 빨리 찾기위함
 // 이 게임은 맵이 하나고 맵id가 1번이라는것으로 가정
@@ -95,13 +97,52 @@ namespace Server.Game
 			return !_collision[y, x] && (!checkObjects || _players[y, x] == null); 
 		}
 
+		public Player Find(Vector2Int cellPos)
+		{
+			if (cellPos.x < MinX || cellPos.x > MaxX)
+				return null;
+			if (cellPos.y < MinY || cellPos.y > MaxY)
+				return null;
+
+			// 좌표찾기
+			int x = cellPos.x - MinX;
+			int y = MaxY - cellPos.y;
+			return _players[y, x];
+		}
+
 		// 나중에는 플레이어 대신 더 상위객체가 들어갈거임(몹같은것도 포함하는)
 		public bool ApplyMove(Player player, Vector2Int dest)
         {
 			PositionInfo posInfo = player.Info.PosInfo;
+			// 플레이어가 정상적인 좌표에 있는지 체크
+			if (posInfo.PosX < MinX || posInfo.PosX > MaxX)
+				return false;
+			if (posInfo.PosY < MinY || posInfo.PosY > MaxY)
+				return false;
+
 			if (CanGo(dest, checkObjects: true) == false)
 				return false;
 
+            // 목적하는 곳에 갈 수 있으니 이동
+            {
+				// 플레이어의 이동 전 좌표를 해당하는 _players 배열의 위치로 찾아가게 변환
+				int x = posInfo.PosX - MinX;
+				int y = MaxY - posInfo.PosY;
+				// 내 좌표가 처음부터 잘못되어 있다면? 
+				// -> 구한 x,y가 유효범위내에 있다고 확신할수가 없다. -> 위에서 체크
+				if(_players[y, x] == player) // 정말 그 좌표에 있는게 player인지 한번 더 체크, 사실 아니면 진짜 문제있는거임
+					_players[y, x] = null;
+			}
+            {
+				// dest에 대응하는 _players 내 좌표를 찾는 부분
+				int x = dest.x - MinX;
+				int y = MaxY - dest.y;
+				_players[y, x] = player;
+            }
+
+			// 실제 좌표 이동
+			posInfo.PosX = dest.x;
+			posInfo.PosY = dest.y;
 			return true;
         }
 

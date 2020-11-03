@@ -20,10 +20,13 @@ public class PlayerController : CreatureController
     // 화살쏘기 이런건 유저만 쓰니깐 UpdateAnimation을 오버라이드 해서 사용
     protected override void UpdateAnimation()
     {
+        if (_animator == null || _sprite == null)
+            return;
+
         // switch 문으로 해도 되지만 내부에서 또 switch 쓸거기 때문에 가독성을 위해 if~else로
         if (State == CreatureState.Idle)
         {
-            switch (_lastDir)
+            switch (Dir)
             {
                 // 서버입장에서는 멈췄냐가 문제지 어느방향으로 가다가 멈췄는지는 관심이 없다
                 // 바뀌기 직전의 _dir을 받아다가 씀.
@@ -73,7 +76,7 @@ public class PlayerController : CreatureController
             // 이제 스킬에 따라 여러가지 애니메이션이 나온다.
             // 내가 스킬쓰기 직전까지 바라보고 있던 방향으로 스킬이 시전되어야 한다
             // 스킬이 하나밖에 없어서 삼항식으로 했는데 보통 시트에서 스킬데이터 읽어와서 재생함
-            switch (_lastDir)
+            switch (Dir)
             {
                 case MoveDir.Up:
                     _animator.Play(_rangedSkill ? "ATTACK_WEAPON_BACK" : "ATTACK_BACK");
@@ -109,15 +112,17 @@ public class PlayerController : CreatureController
     // 스킬 사용중에는 상태변화를 막고 싶은데 시간 기준으로 한다 치면 어떻게 시간을 카운트?
     // 1. Update()
     // 2. Coroutine
-    protected override void UpdateIdle()
-    {
-        // 이동 상태로 바뀔건지 확인
-        if(Dir != MoveDir.None)
-        {
-            State = CreatureState.Moving; // UpdateMoving()으로 넘어감
-            return;
-        }
-    }
+
+    // 더 이상 내가 조작하는 플레이어 이외의 다른 플레이어들은 직접 건들지 않는다.
+    //protected override void UpdateIdle()
+    //{
+    //    // 이동 상태로 바뀔건지 확인
+    //    if(Dir != MoveDir.None)
+    //    {
+    //        State = CreatureState.Moving; // UpdateMoving()으로 넘어감
+    //        return;
+    //    }
+    //}
 
     public void UseSkill(int skillId)
     {
@@ -164,7 +169,7 @@ public class PlayerController : CreatureController
         ArrowController ac = go.GetComponent<ArrowController>(); // null이면 즉시 수정해야하니 체크안함
         // 플레이어가 보고있는 방향으로 쏴야함. 
         // 키보드를 누르고 있지 않더라도 직전 방향으로라도 쏴야함
-        ac.Dir = _lastDir;
+        ac.Dir = Dir;
         ac.CellPos = CellPos; // 화살은 내 위치 기준으로 발사
 
         // 대기 시간

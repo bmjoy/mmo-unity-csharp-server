@@ -10,7 +10,7 @@ public class ArrowController : CreatureController
     protected override void Init()
     {
         //화살 방향은 생성될때 결정
-        switch (_lastDir)
+        switch (Dir)
         {
             case MoveDir.Up:
                 transform.rotation = Quaternion.Euler(0, 0, 0);
