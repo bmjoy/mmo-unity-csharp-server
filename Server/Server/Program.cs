@@ -23,7 +23,7 @@ namespace Server
 
 		static void Main(string[] args)
 		{
-			RoomManager.Instance.Add(); // 서버 시작할때 일단 게임룸 하나 추가
+			RoomManager.Instance.Add(1); // 서버 시작할때 일단 게임룸 하나 추가, 맵 번호는 1번이라 가정
 
 			// DNS (Domain Name System)
 			string host = Dns.GetHostName();

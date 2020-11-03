@@ -29,7 +29,8 @@ public struct PQNode : IComparable<PQNode>
 
 // 실시간으로 맵을 로드 및 삭제
 // 맵에 딸린 충돌 정보 로드
-
+// 클라는 유저가 한맵에만 있으니 매니저가 하나만 있으면 되는데
+// 서버의 경우 모든 맵을 관리해야 하니깐.. 매니저가 여러맵을 다 들고있어야함
 public class MapManager
 {
     public Grid CurrentGrid { get; private set; }

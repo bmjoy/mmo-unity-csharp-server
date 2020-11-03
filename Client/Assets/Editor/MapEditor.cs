@@ -16,6 +16,12 @@ public class MapEditor
     [MenuItem("Tools/GenerateMap %#g")]
     private static void GenerateMap()
     {
+        GenerateByPath("Assets/Resources/Map"); // 클라용
+        GenerateByPath("../Common/MapData"); // 서버용
+    }
+
+    private static void GenerateByPath(string pathPrefix)
+    {
         GameObject[] gameObjects = Resources.LoadAll<GameObject>("Prefabs/Map");
 
         foreach (GameObject go in gameObjects)
@@ -33,7 +39,7 @@ public class MapEditor
             // blocked 목록을 파일로 빼서 서버에 줘야함
             // 갈수있는곳 0 막힌곳 1
             // 탐색범위를 더 큰 단위인 tmBase(Tilemap_Base)로 변경하였다.
-            using (var writer = File.CreateText($"Assets/Resources/Map/{go.name}.txt"))
+            using (var writer = File.CreateText($"{pathPrefix}/{go.name}.txt"))
             {
                 writer.WriteLine(tmBase.cellBounds.xMin);
                 writer.WriteLine(tmBase.cellBounds.xMax);
