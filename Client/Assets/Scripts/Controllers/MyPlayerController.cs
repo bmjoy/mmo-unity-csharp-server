@@ -40,18 +40,29 @@ public class MyPlayerController : PlayerController
             return;
         }
 
-        // 이동상태로 바뀔게 아니면 스킬 사용 가능한 상태가 됨.
+        // 이동상태로 바뀔게 아니면 스킬 사용 가능한 상태가 됨. + 스킬 쿨타임 중이 아님.
         // 스킬은 Idle 상태일때만 사용가능
         // GetDirInput()에 있던 것을 분리
-        if (Input.GetKey(KeyCode.Space))
+        if (_coSkillCooltime == null && Input.GetKey(KeyCode.Space))
         {
             // 서버에 나 쓰킬 쓰고싶다고 전송
             // 서버는 스킬사용체크
-            State = CreatureState.Skill; // UpdateAnimation은 알아서 불러줄거임
-            // 0.5초 후에 스킬시전상태(CreatureState.Skill)를 푼다
-            // _coSkill = StartCoroutine("CoStartPunch"); 
-            _coSkill = StartCoroutine("CoStartShootArrow");
+            Debug.Log("Skill");
+
+            C_Skill skill = new C_Skill() { Info = new SkillInfo() };
+            skill.Info.SkillId = 1;
+            Managers.Network.Send(skill);
+
+            _coSkillCooltime = StartCoroutine("CoInputCoolTime", 0.2f);
         }
+    }
+
+    Coroutine _coSkillCooltime;
+    IEnumerator CoInputCoolTime(float time)
+    {
+        // 키 입력 딜레이 줄려고
+        yield return new WaitForSeconds(time);
+        _coSkillCooltime = null;
     }
 
     void LateUpdate()
@@ -140,7 +151,7 @@ public class MyPlayerController : PlayerController
         CheckUpdatedFlag();
     }
 
-    void CheckUpdatedFlag()
+    protected override void CheckUpdatedFlag()
     {
         if (_updated)
         {

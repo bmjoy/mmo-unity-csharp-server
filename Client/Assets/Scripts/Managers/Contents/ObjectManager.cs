@@ -24,6 +24,7 @@ public class ObjectManager
             MyPlayer.Id = info.PlayerId;
             // 이렇게 position에 대한 클래스 하나가 있으면 코드 한줄에 모든 pos 관련 정보를 넣어줄수있다.
             MyPlayer.PosInfo = info.PosInfo;
+            MyPlayer.SyncPos(); // 스르륵 이동 없이 즉시 좌표이동을 반영
         }
         else
         {
@@ -35,6 +36,7 @@ public class ObjectManager
             PlayerController pc = go.GetComponent<PlayerController>();
             pc.Id = info.PlayerId;
             pc.PosInfo = info.PosInfo;
+            pc.SyncPos();
         }
     }
 

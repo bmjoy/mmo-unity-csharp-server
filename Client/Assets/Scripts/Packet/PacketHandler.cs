@@ -23,9 +23,9 @@ class PacketHandler
 		Managers.Object.RemoveMyPlayer();
 	}
 
+	// 다른 유저들의 정보를 받음
 	public static void S_SpawnHandler(PacketSession session, IMessage packet)
 	{
-		// 스폰되어 있는 플레이어 정보
 		S_Spawn spawnPacket = packet as S_Spawn;
 
         foreach (PlayerInfo player in spawnPacket.Players)
@@ -48,7 +48,6 @@ class PacketHandler
 	public static void S_MoveHandler(PacketSession session, IMessage packet)
 	{
 		S_Move movePacket = packet as S_Move;
-		ServerSession serverSession = session as ServerSession;
 
 		GameObject go = Managers.Object.FindById(movePacket.PlayerId);
 		if (go == null)
@@ -61,5 +60,22 @@ class PacketHandler
 
 		// 내 이동은 이미 클라에서 처리했는데, 굳이 서버에서 콜백을 받아다가 덮어쓸 이유는 없다.
 		cc.PosInfo = movePacket.PosInfo;
+	}
+
+	public static void S_SkillHandler(PacketSession session, IMessage packet)
+	{
+		S_Skill skillPacket = packet as S_Skill;
+
+		// 여기서 찾은 PlayerId가 꼭 나라는 보장은 없다. 스킬은 아무나 쓰니깐
+		GameObject go = Managers.Object.FindById(skillPacket.PlayerId);
+		if (go == null)
+			return;
+
+		// 정보를 고치기 위해 CreatureController에 접근
+		PlayerController pc = go.GetComponent<PlayerController>();
+		if (pc != null)
+		{
+			pc.UseSkill(skillPacket.Info.SkillId);
+		}
 	}
 }

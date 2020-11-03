@@ -119,24 +119,42 @@ public class PlayerController : CreatureController
         }
     }
 
+    public void UseSkill(int skillId)
+    {
+        if(skillId == 1)
+        {
+            // 주먹질
+            _coSkill = StartCoroutine("CoStartPunch");
+        }
+    }
+
+    protected virtual void CheckUpdatedFlag()
+    {
+
+    }
+
     // 플레이어 평타를 맞혔을때
     IEnumerator CoStartPunch()
     {
         // 피격 판정 -> 이걸 클라에서 처리하나?
         // 내가 바라보고 있는 방향 기준 바로 앞의 좌표
-        GameObject go = Managers.Object.Find(GetFrontCellPos());
-        if (go != null)
-        {
-            CreatureController cc = go.GetComponent<CreatureController>();
-            if (cc != null)
-                cc.OnDamaged();
-        }
+        //GameObject go = Managers.Object.Find(GetFrontCellPos());
+        //if (go != null)
+        //{
+        //    CreatureController cc = go.GetComponent<CreatureController>();
+        //    if (cc != null)
+        //        cc.OnDamaged();
+        //}
 
         // 대기 시간
-        _rangedSkill = false; // 범위스킬 체크
+        _rangedSkill = false; // 원거리 공격인지 체크
+        State = CreatureState.Skill;
+        // 처리는 서버가 하지만, 클라측에서도 패킷을 마구잡이로 생성해다가 쏘는것을 방지하기 위해 
+        // 아래처럼 쿨타임을 준다.
         yield return new WaitForSeconds(0.5f);
         State = CreatureState.Idle;
         _coSkill = null;
+        CheckUpdatedFlag(); // (임시) MyPlayer일때만 CheckUpdatedFlag에서 서버와 통신할거임
     }
 
     IEnumerator CoStartShootArrow()

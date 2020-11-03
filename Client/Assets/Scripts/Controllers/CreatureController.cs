@@ -34,9 +34,20 @@ public class CreatureController : MonoBehaviour
         }
     }
 
+    public void SyncPos()
+    {
+        // 지금 이동 구현이 일단 유니티상 좌표는 즉시 바뀌고 그 다음에
+        // CellPos를 이용해 스르륵 이동하는 것을 구현하고 있다.
+        // 그런데 스르륵 이동하는 표현 없이 좌표이동을 즉시 반영하고 싶으면?
+        // 내 CellPos와 실제 Transform을 맞춰주겠다는 소리.
+
+        // CellPos에 따른 내가 실제로 있어야 할 위치를(transform 좌표) 얻어옴
+        Vector3 destPos = Managers.Map.CurrentGrid.CellToWorld(CellPos) + new Vector3(0.5f, 0.5f); // 0.5는 캐릭터를 셀 안에 넣기위한 보정
+        transform.position = destPos;
+    }
+
     // 내가 cell 기준으로 어떤 cell에 위치해 있는지?
     // 추후 접근해서 쓸 가능성이 있는 변수들은 protected
-
     // protected Vector3Int _cellPos = Vector3Int.zero;
     // ObjectManager에서 끌어다 써야 하므로 public으로 변경
     public Vector3Int CellPos
@@ -246,7 +257,7 @@ public class CreatureController : MonoBehaviour
         // 값이 왔으면 그걸로 덮어씌워질거임
         State = CreatureState.Idle;
         Dir = MoveDir.None;
-        CellPos = new Vector3Int(0, 0, 0);
+        // CellPos = new Vector3Int(0, 0, 0); // 위치를 강제로 건드는 코드는 조심
         UpdateAnimation();
     }
 
