@@ -5,17 +5,29 @@ using System.Text;
 
 namespace Server.Game
 {
-    public class Player
+    public class GameObject
     {
-        // 플레이어 정보
-        // PlayerInfo 안에 있는 PositionInfo도 new 해야함
+        // 공용으로 사용할 GameObject 타입 생성 -> 뭐에 쓰는놈인지 구분
+        public GameObjectType ObjectType { get; protected set; } = GameObjectType.None;
+        public int Id
+        {
+            get { return Info.ObjectId; }
+            set { Info.ObjectId = value; }
+        }
 
         // Room이나 Info의 get, set에 lock을 걸면 괜찮지 않나 싶은데
         // 위의 것들을 get 하는순간 참조를 가져오는거기 때문에 잠궈봤자 그거 무시하고 접근가능
         // 걍 null 체크하고 조심하자
-        public PlayerInfo Info { get; set; } = new PlayerInfo() { PosInfo = new PositionInfo() };
         public GameRoom Room { get; set; } // 들어가있는 게임룸
-        public ClientSession Session { get; set; } // 뭔가 보내려면 클라이언트 세션을 알고 있는게 좋다
+        public ObjectInfo Info { get; set; } = new ObjectInfo();
+        // PosInfo는 자주 쓸것같아서 따로 뺐다
+        public PositionInfo PosInfo { get; private set; } = new PositionInfo();
+
+        public GameObject()
+        {
+            // new ObjectInfo, PositionInfo 해주는게 여기보다 일찍 실행되는갑네?
+            Info.PosInfo = PosInfo;
+        }
 
         public Vector2Int CellPos
         {
@@ -26,9 +38,15 @@ namespace Server.Game
 
             set
             {
-                Info.PosInfo.PosX = value.x;
-                Info.PosInfo.PosY = value.y;
+                PosInfo.PosX = value.x;
+                PosInfo.PosY = value.y;
             }
+        }
+
+        public Vector2Int GetFrontCellPos()
+        {
+            // 내가 지금 진행하고 있는 방향 기준으로 즉시 반환
+            return GetFrontCellPos(PosInfo.MoveDir);
         }
 
         // 내가 바라보는 방향의 바로 앞 Cell 포지션 (타격처리용)
@@ -58,4 +76,3 @@ namespace Server.Game
         }
     }
 }
-

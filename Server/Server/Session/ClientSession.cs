@@ -55,9 +55,9 @@ namespace Server
 
 			// 클라이언트가 서버에 접속성공
 			// DB를 긁어 플레이어 정보를 가져와서 클라에 보내주고..
-			MyPlayer = PlayerManager.Instance.Add();
+			MyPlayer = ObjectManager.Instance.Add<Player>();
             {
-				MyPlayer.Info.Name = $"Player_{MyPlayer.Info.PlayerId}";
+				MyPlayer.Info.Name = $"Player_{MyPlayer.Info.ObjectId}";
 				MyPlayer.Info.PosInfo.State = CreatureState.Idle;
 				MyPlayer.Info.PosInfo.MoveDir = MoveDir.Down; // 처음에 쳐다보고 있는 방향
 				// 초기값이 0인 경우에는 디버깅할때 값 자체가 안떠서 버그처럼 보이는데 버그는 아님.
@@ -77,7 +77,7 @@ namespace Server
 
 		public override void OnDisconnected(EndPoint endPoint)
 		{
-			RoomManager.Instance.Find(1).LeaveGame(MyPlayer.Info.PlayerId); // 게임룸에서 퇴장
+			RoomManager.Instance.Find(1).LeaveGame(MyPlayer.Info.ObjectId); // 게임룸에서 퇴장
 
 			SessionManager.Instance.Remove(this);
 

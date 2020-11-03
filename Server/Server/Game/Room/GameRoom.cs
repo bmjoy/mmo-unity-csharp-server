@@ -28,7 +28,7 @@ namespace Server.Game
             // 리스트를 건드는 부분은 락을 걸어놓자
             lock (_lock)
             {
-                _players.Add(newPlayer.Info.PlayerId, newPlayer);
+                _players.Add(newPlayer.Info.ObjectId, newPlayer);
                 newPlayer.Room = this;
 
                 // 본인에게 정보 전송
@@ -45,14 +45,14 @@ namespace Server.Game
                     {
                         // 내 정보는 위에서 보냈으니, 내가 아닌 플레이어들의 정보만 담는다
                         if (newPlayer != p)
-                            spawnPacket.Players.Add(p.Info);
+                            spawnPacket.Objects.Add(p.Info);
                     }
                     newPlayer.Session.Send(spawnPacket); // 나에게 현재 게임에 있는 타인의 정보를 알린다.
                 }
                 // 타인에게 정보 전송
                 {
                     S_Spawn spawnPacket = new S_Spawn();
-                    spawnPacket.Players.Add(newPlayer.Info);
+                    spawnPacket.Objects.Add(newPlayer.Info);
                     // 신규유저의 정보를 기존에 접속중인 모두에게 알림
                     foreach (Player p in _players.Values)
                     {
@@ -82,7 +82,7 @@ namespace Server.Game
                 {
                     // 나갔다고 알려줄 패킷 생성
                     S_Despawn despawnPacket = new S_Despawn();
-                    despawnPacket.PlayerIds.Add(player.Info.PlayerId);
+                    despawnPacket.PlayerIds.Add(player.Info.ObjectId);
                     foreach (Player p in _players.Values)
                     {
                         if(player != p)
@@ -102,7 +102,7 @@ namespace Server.Game
             {
                 // 검증
                 PositionInfo movePosInfo = movePacket.PosInfo; // 이동하려는 목적지 좌표
-                PlayerInfo info = player.Info; // 이동하기 전의 플레이어 좌표
+                ObjectInfo info = player.Info; // 이동하기 전의 플레이어 좌표
 
                 // 다른 좌표로 이동할 경우, 갈 수 있는지 체크
                 if(movePosInfo.PosX != info.PosInfo.PosX || movePosInfo.PosY != info.PosInfo.PosY)
@@ -121,7 +121,7 @@ namespace Server.Game
                 
                 // 다른 플레이어에게도 알려준다
                 S_Move resMovePacket = new S_Move();
-                resMovePacket.PlayerId = player.Info.PlayerId; // 움직이는 사람의 id
+                resMovePacket.PlayerId = player.Info.ObjectId; // 움직이는 사람의 id
                 resMovePacket.PosInfo = movePacket.PosInfo;
 
                 Broadcast(resMovePacket); // 들어와있는 모든 유저에게 알림
@@ -132,33 +132,43 @@ namespace Server.Game
         {
             if (player == null) // player가 지금 GameRoom에 소속되었는지도 체크
                 return;
-
+            
+            // 스킬분기처리.. 몇 개 없다는 가정하에
+            // 스킬이 많아지면 Skill 클래스를 따로 파서 플레이어에 주입하는게 낫다
             lock (_lock)
             {
-                PlayerInfo info = player.Info;
+                ObjectInfo info = player.Info;
                 if (info.PosInfo.State != CreatureState.Idle)
                     return;
 
                 // 스킬 사용 가능 여부 체크
-
-                // 통과
+                
+                // 스킬 애니메이션 맞춰주는 부분
                 info.PosInfo.State = CreatureState.Skill;
-
                 S_Skill skill = new S_Skill() { Info = new SkillInfo() }; // info도 클래스임
-                skill.PlayerId = info.PlayerId;
-                skill.Info.SkillId = 1; // 나중에 시트로 뺄거야
-                Broadcast(skill);
+                skill.PlayerId = info.ObjectId;
+                skill.Info.SkillId = skillPacket.Info.SkillId; // 나중에 시트로 뺄거야
+                Broadcast(skill); // 에코서버마냥 전파한다
 
-                // 데미지 판정 -> 항상 치팅 대비
-                // 내 공격방향에 적이 있나 없나 체크
-                // GetFrontCellPos에 MoveDir.None 처리가 없으니 
-                // 항상 공격자의 위치를 반환해서 아무대나 떄려도 타격이 되는 문제가 있었음
-                // MoveDir.None이 그냥 키입력 여부를 받는거라 서버에는 필요없으므로 전체적으로 없애기로함
-                Vector2Int skillPos = player.GetFrontCellPos(info.PosInfo.MoveDir);
-                Player target = _map.Find(skillPos);
-                if(target != null)
+                if (skillPacket.Info.SkillId == 1)
                 {
-                    Console.WriteLine("Hit Player!");
+                    // 주먹질
+                    // 데미지 판정 -> 항상 치팅 대비
+                    // 내 공격방향에 적이 있나 없나 체크
+                    // GetFrontCellPos에 MoveDir.None 처리가 없으니 
+                    // 항상 공격자의 위치를 반환해서 아무대나 떄려도 타격이 되는 문제가 있었음
+                    // MoveDir.None이 그냥 키입력 여부를 받는거라 서버에는 필요없으므로 전체적으로 없애기로함
+                    Vector2Int skillPos = player.GetFrontCellPos(info.PosInfo.MoveDir);
+                    Player target = _map.Find(skillPos);
+                    if (target != null)
+                    {
+                        Console.WriteLine("Hit Player!");
+                    }
+                }
+                else if(skillPacket.Info.SkillId == 2)
+                {
+                    // 화살
+
                 }
             }
         }
