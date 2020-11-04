@@ -28,9 +28,9 @@ class PacketHandler
 	{
 		S_Spawn spawnPacket = packet as S_Spawn;
 
-        foreach (PlayerInfo player in spawnPacket.Players)
+        foreach (ObjectInfo obj in spawnPacket.Objects)
         {
-			Managers.Object.Add(player, myPlayer: false);
+			Managers.Object.Add(obj, myPlayer: false);
         }
 	}
 
@@ -38,7 +38,7 @@ class PacketHandler
 	{
 		S_Despawn despawnPacket = packet as S_Despawn;
 
-		foreach (int id in despawnPacket.PlayerIds)
+		foreach (int id in despawnPacket.ObjectIds)
 		{
 			Managers.Object.Remove(id);
 		}
@@ -49,7 +49,7 @@ class PacketHandler
 	{
 		S_Move movePacket = packet as S_Move;
 
-		GameObject go = Managers.Object.FindById(movePacket.PlayerId);
+		GameObject go = Managers.Object.FindById(movePacket.ObjectId);
 		if (go == null)
 			return;
 
@@ -67,7 +67,7 @@ class PacketHandler
 		S_Skill skillPacket = packet as S_Skill;
 
 		// 여기서 찾은 PlayerId가 꼭 나라는 보장은 없다. 스킬은 아무나 쓰니깐
-		GameObject go = Managers.Object.FindById(skillPacket.PlayerId);
+		GameObject go = Managers.Object.FindById(skillPacket.ObjectId);
 		if (go == null)
 			return;
 

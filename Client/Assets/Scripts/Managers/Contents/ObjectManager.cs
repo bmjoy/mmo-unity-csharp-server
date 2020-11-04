@@ -10,34 +10,62 @@ public class ObjectManager
     public MyPlayerController MyPlayer { get; set; } 
     // 딕셔너리 하나에 넣어서 관리해도 되고 종류별로 딕셔너리 늘려도 됨
     Dictionary<int, GameObject> _objects = new Dictionary<int, GameObject>();
-
-    // 생성할 플레이어의 정보, 지금 생성하는 플레이어가 내가 조작하는 플레이어 인가?
-    public void Add(PlayerInfo info, bool myPlayer = false)
+    
+    public static GameObjectType GetObjectTypeById(int id) // 서버에서 긁어와도 된다.
     {
-        if (myPlayer)
-        {
-            GameObject go = Managers.Resource.Instantiate("Creature/MyPlayer");
-            go.name = info.Name;
-            _objects.Add(info.PlayerId, go);
+        int type = (id >> 24) & 0x7F;
+        return (GameObjectType)type;
+    }
 
-            MyPlayer = go.GetComponent<MyPlayerController>();
-            MyPlayer.Id = info.PlayerId;
-            // 이렇게 position에 대한 클래스 하나가 있으면 코드 한줄에 모든 pos 관련 정보를 넣어줄수있다.
-            MyPlayer.PosInfo = info.PosInfo;
-            MyPlayer.SyncPos(); // 스르륵 이동 없이 즉시 좌표이동을 반영
-        }
-        else
+    public void Add(ObjectInfo info, bool myPlayer = false)
+    {
+        // 이제 add 전에 타입 구하고 그 타입별로 다르게 add 해야함
+        GameObjectType objectType = GetObjectTypeById(info.ObjectId);
+        if(objectType == GameObjectType.Player)
         {
-            // 내가 조작하는 플레이어가 아닌 경우
-            GameObject go = Managers.Resource.Instantiate("Creature/Player");
-            go.name = info.Name;
-            _objects.Add(info.PlayerId, go);
+            if (myPlayer)
+            {
+                GameObject go = Managers.Resource.Instantiate("Creature/MyPlayer");
+                go.name = info.Name;
+                _objects.Add(info.ObjectId, go);
 
-            PlayerController pc = go.GetComponent<PlayerController>();
-            pc.Id = info.PlayerId;
-            pc.PosInfo = info.PosInfo;
-            pc.SyncPos();
+                MyPlayer = go.GetComponent<MyPlayerController>();
+                MyPlayer.Id = info.ObjectId;
+                // 이렇게 position에 대한 클래스 하나가 있으면 코드 한줄에 모든 pos 관련 정보를 넣어줄수있다.
+                MyPlayer.PosInfo = info.PosInfo;
+                MyPlayer.SyncPos(); // 스르륵 이동 없이 즉시 좌표이동을 반영
+            }
+            else
+            {
+                // 내가 조작하는 플레이어가 아닌 경우
+                GameObject go = Managers.Resource.Instantiate("Creature/Player");
+                go.name = info.Name;
+                _objects.Add(info.ObjectId, go);
+
+                PlayerController pc = go.GetComponent<PlayerController>();
+                pc.Id = info.ObjectId;
+                pc.PosInfo = info.PosInfo;
+                pc.SyncPos();
+            }
         }
+        else if (objectType == GameObjectType.Monster)
+        {
+
+        }
+        else if (objectType == GameObjectType.Projectile)
+        {
+            // 이건 여러가지 종류가 있을텐데
+            // 일단 화살이라 치자
+            GameObject go = Managers.Resource.Instantiate("Creature/Arrow");
+            go.name = "Arrow";
+            _objects.Add(info.ObjectId, go);
+
+            ArrowController ac = go.GetComponent<ArrowController>();
+            ac.Dir = info.PosInfo.MoveDir;
+            ac.CellPos = new Vector3Int(info.PosInfo.PosX, info.PosInfo.PosY, 0);
+            ac.SyncPos(); // 이건 좀 햇갈리네
+        }
+
     }
 
     public void Remove(int id)

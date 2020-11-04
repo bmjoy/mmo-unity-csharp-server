@@ -35,11 +35,16 @@ namespace Server
 			Console.WriteLine("Listening...");
 
 			//FlushRoom();
-			JobTimer.Instance.Push(FlushRoom);
+			//JobTimer.Instance.Push(FlushRoom);
 
+			// 이렇게 메인 루프 어딘가에서 콘텐츠들을 전부 업댓 시켜주는 코드가 있어야 한다.
+			// 이걸 어디서 놓고 돌릴지 매우 햇갈림
 			while (true)
 			{
-				JobTimer.Instance.Flush();
+				//JobTimer.Instance.Flush();
+				RoomManager.Instance.Find(1).Update();
+
+				Thread.Sleep(100); // 너무 자주 하지 않도록.. 땜빵임
 			}
 		}
 	}

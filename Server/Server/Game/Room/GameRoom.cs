@@ -12,80 +12,149 @@ namespace Server.Game
         public int RoomId { get; set; }
 
         // 이제 id를 통해 플레이어를 빠르게 찾는다
+        // 각 오브젝트 타입별로 따로따로 딕셔너리를 만들던지
+        // 딕셔너리 하나에 다 때려넣던지
+        // 분리해서 관리하는게 나중에 브로드캐스팅 할때 편함. -> 빠름
         Dictionary<int, Player> _players = new Dictionary<int, Player>();
-        Map _map = new Map();
+        Dictionary<int, Monster> _monsters = new Dictionary<int, Monster>();
+        Dictionary<int, Projectile> _projectiles = new Dictionary<int, Projectile>();
+        public Map Map { get; private set; } = new Map();
 
         public void Init(int mapId)
         {
-            _map.LoadMap(mapId);
+            Map.LoadMap(mapId);
         }
 
-        public void EnterGame(Player newPlayer)
+        // 클라는 1초당 120프렘정도 업댓함
+        // 서버는 1초당 10번정도면 충분하다
+        // 이거 누가 호출? -> 메인에서 돌리고 있다
+        public void Update()
         {
-            if (newPlayer == null)
+            lock (_lock)
+            {
+                foreach (Projectile projectile in _projectiles.Values)
+                {
+                    projectile.Update();
+                }
+            }
+        }
+
+        public void EnterGame(GameObject gameObject)
+        {
+            if (gameObject == null)
                 return;
+
+            GameObjectType type = ObjectManager.GetObjectTypeById(gameObject.Id);
 
             // 리스트를 건드는 부분은 락을 걸어놓자
             lock (_lock)
             {
-                _players.Add(newPlayer.Info.ObjectId, newPlayer);
-                newPlayer.Room = this;
-
-                // 본인에게 정보 전송
+                // 각 오브젝트 타입별 처리
+                if(type == GameObjectType.Player)
                 {
-                    S_EnterGame enterPacket = new S_EnterGame();
+                    Player player = gameObject as Player;
+                    _players.Add(gameObject.Id, player); // 해당하는 아이디와 플레이어를 딕셔너리에 삽입
+                    player.Room = this;
 
-                    // 패킷 보낼때마다 new 해서 Player 만들어줘도 되지만
-                    // 받는쪽에서는 Player 자체가 아니라 그 플레이어의 정보만 궁금함
-                    enterPacket.Player = newPlayer.Info;
-                    newPlayer.Session.Send(enterPacket); // 나에게 내 정보 전송
-
-                    S_Spawn spawnPacket = new S_Spawn();
-                    foreach (Player p in _players.Values)
+                    // 본인에게 스폰됐다는 정보 전송
                     {
-                        // 내 정보는 위에서 보냈으니, 내가 아닌 플레이어들의 정보만 담는다
-                        if (newPlayer != p)
-                            spawnPacket.Objects.Add(p.Info);
+                        S_EnterGame enterPacket = new S_EnterGame();
+
+                        // 패킷 보낼때마다 new 해서 Player 만들어줘도 되지만
+                        // 받는쪽에서는 Player 자체가 아니라 그 플레이어의 정보만 궁금함
+                        enterPacket.Player = player.Info;
+                        player.Session.Send(enterPacket); // 나에게 내 정보 전송
+
+                        S_Spawn spawnPacket = new S_Spawn();
+                        foreach (Player p in _players.Values)
+                        {
+                            // 내 정보는 위에서 보냈으니, 내가 아닌 플레이어들의 정보만 담는다
+                            if (player != p)
+                                spawnPacket.Objects.Add(p.Info);
+                        }
+                        player.Session.Send(spawnPacket); // 나에게 현재 게임에 있는 타인의 정보를 알린다.
                     }
-                    newPlayer.Session.Send(spawnPacket); // 나에게 현재 게임에 있는 타인의 정보를 알린다.
                 }
-                // 타인에게 정보 전송
+                else if (type == GameObjectType.Monster)
+                {
+                    Monster monster = gameObject as Monster;
+                    _monsters.Add(gameObject.Id, monster);
+                    monster.Room = this;
+                }
+                else if (type == GameObjectType.Projectile) // 투사체
+                {
+                    Projectile projectile = gameObject as Projectile;
+                    _projectiles.Add(gameObject.Id, projectile);
+                    projectile.Room = this;
+                }
+
+
+                // 타인에게 새로운 오브젝트가 스폰됐음을 알림
                 {
                     S_Spawn spawnPacket = new S_Spawn();
-                    spawnPacket.Objects.Add(newPlayer.Info);
+                    spawnPacket.Objects.Add(gameObject.Info);
                     // 신규유저의 정보를 기존에 접속중인 모두에게 알림
                     foreach (Player p in _players.Values)
                     {
-                        if (newPlayer != p)
+                        // 본인의 정보 (MyPlayer)는 S_EnterGame 패킷으로 받기로 했기 때문이기도 하다.
+                        if (p.Id != gameObject.Id) // 위에서 생성한게 나 자신이 아닐때만 알림 -> 나 자신일때는 이미 위에서 알렸음
                             p.Session.Send(spawnPacket);
                     }
                 }
             }
         }
 
-        public void LeaveGame(int playerId)
+        public void LeaveGame(int objectId)
         {
+            GameObjectType type = ObjectManager.GetObjectTypeById(objectId); // objectId를 통해 타입 추출
+
             lock (_lock)
             {
-                Player player = null;
-                if (_players.Remove(playerId, out player) == false)
-                    return; // 지울 플레이어가 없다.
-
-                player.Room = null;
-
-                // 본인에게 정보 전송
+                // 각 오브젝트 타입별 처리
+                if (type == GameObjectType.Player)
                 {
-                    S_LeaveGame leavePacket = new S_LeaveGame();
-                    player.Session.Send(leavePacket);
+                    Player player = null;
+                    if (_players.Remove(objectId, out player) == false) // 딕셔너리에서 지우고
+                        return; // 지울 플레이어가 없다.
+
+                    player.Room = null; // player에 지정된 룸을 밀고
+                    // 맵에다가도 내가 나갔음을 처리
+                    Map.ApplyLeave(player);
+
+                    // 본인에게 정보 전송
+                    {
+                        S_LeaveGame leavePacket = new S_LeaveGame();
+                        player.Session.Send(leavePacket);
+                    }
                 }
+                else if (type == GameObjectType.Monster)
+                {
+                    Monster monster = null;
+                    if (_monsters.Remove(objectId, out monster) == false)
+                        return;
+
+                    monster.Room = null;
+                    Map.ApplyLeave(monster);
+                }
+                else if (type == GameObjectType.Projectile)
+                {
+                    Projectile projectile = null;
+                    if (_projectiles.Remove(objectId, out projectile) == false)
+                        return; // 못 찾음
+
+                    // 찾음
+                    projectile.Room = null;
+                    // 화살은 충돌대상이 아니라 맵에다가 알리지는 않았음
+                }
+
                 // 타인에게 정보 전송
                 {
-                    // 나갔다고 알려줄 패킷 생성
+                    // 누군가가 나갔다고 알려줄 패킷 생성
                     S_Despawn despawnPacket = new S_Despawn();
-                    despawnPacket.PlayerIds.Add(player.Info.ObjectId);
+                    despawnPacket.ObjectIds.Add(objectId);
                     foreach (Player p in _players.Values)
                     {
-                        if(player != p)
+                        if(p.Id != objectId) // 자기자신 빼고 모두에게 알림
                             p.Session.Send(despawnPacket);
                     }
                 }
@@ -107,7 +176,7 @@ namespace Server.Game
                 // 다른 좌표로 이동할 경우, 갈 수 있는지 체크
                 if(movePosInfo.PosX != info.PosInfo.PosX || movePosInfo.PosY != info.PosInfo.PosY)
                 {
-                    if (_map.CanGo(new Vector2Int(movePosInfo.PosX, movePosInfo.PosY)) == false)
+                    if (Map.CanGo(new Vector2Int(movePosInfo.PosX, movePosInfo.PosY)) == false)
                         return; // 플레이어가 가려고 요청한 곳에 갈 수 있는지를 실제 맵 데이터와 대조
                 }
 
@@ -117,11 +186,11 @@ namespace Server.Game
                 // 이동하는 부분을 GameRoom에서 하지않고 map 클래스에서 처리
                 // 왜냐면 map이 들고있는 플레이어 좌표 배열에 가서 기존 위치를 null 처리하고
                 // 이동시켜야 하기 떄문에 map클래스 안에서 하는게 편하다
-                _map.ApplyMove(player, new Vector2Int(movePosInfo.PosX, movePosInfo.PosY));
+                Map.ApplyMove(player, new Vector2Int(movePosInfo.PosX, movePosInfo.PosY)); // 맵에다가 나를 이동시켜달라 요청
                 
                 // 다른 플레이어에게도 알려준다
                 S_Move resMovePacket = new S_Move();
-                resMovePacket.PlayerId = player.Info.ObjectId; // 움직이는 사람의 id
+                resMovePacket.ObjectId = player.Info.ObjectId; // 움직이는 사람의 id
                 resMovePacket.PosInfo = movePacket.PosInfo;
 
                 Broadcast(resMovePacket); // 들어와있는 모든 유저에게 알림
@@ -146,7 +215,7 @@ namespace Server.Game
                 // 스킬 애니메이션 맞춰주는 부분
                 info.PosInfo.State = CreatureState.Skill;
                 S_Skill skill = new S_Skill() { Info = new SkillInfo() }; // info도 클래스임
-                skill.PlayerId = info.ObjectId;
+                skill.ObjectId = info.ObjectId;
                 skill.Info.SkillId = skillPacket.Info.SkillId; // 나중에 시트로 뺄거야
                 Broadcast(skill); // 에코서버마냥 전파한다
 
@@ -159,16 +228,26 @@ namespace Server.Game
                     // 항상 공격자의 위치를 반환해서 아무대나 떄려도 타격이 되는 문제가 있었음
                     // MoveDir.None이 그냥 키입력 여부를 받는거라 서버에는 필요없으므로 전체적으로 없애기로함
                     Vector2Int skillPos = player.GetFrontCellPos(info.PosInfo.MoveDir);
-                    Player target = _map.Find(skillPos);
+                    GameObject target = Map.Find(skillPos);
                     if (target != null)
                     {
-                        Console.WriteLine("Hit Player!");
+                        Console.WriteLine("Hit GameObject!");
                     }
                 }
                 else if(skillPacket.Info.SkillId == 2)
                 {
-                    // 화살
+                    // 화살 생성
+                    // 클라에서도 화살이 날아가는것을 계산하고 있어야 치팅을 방지할수 있다.
+                    Arrow arrow = ObjectManager.Instance.Add<Arrow>();
+                    if (arrow == null)
+                        return;
 
+                    arrow.Owner = player;
+                    arrow.PosInfo.State = CreatureState.Moving;
+                    arrow.PosInfo.MoveDir = player.PosInfo.MoveDir;
+                    arrow.PosInfo.PosX = player.PosInfo.PosX;
+                    arrow.PosInfo.PosY = player.PosInfo.PosY;
+                    EnterGame(arrow); // 치팅방지 + 코드재사용(화살이 생성됐음을 모두에게 알림)
                 }
             }
         }

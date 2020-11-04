@@ -70,7 +70,7 @@ namespace Server.Game
 		public int SizeY { get { return MaxY - MinY + 1; } }
 
 		bool[,] _collision; // 충돌할 벽이 있나 없나 여부, 차후에는 벽이 아니라 다른 몬스터 같은것도 포함
-		Player[,] _players; // 플레이어 좌표들, 충돌처리를 위해 맵이 들고있는다.
+		GameObject[,] _objects; // 플레이어 좌표들, 충돌처리를 위해 맵이 들고있는다.
 
 		// cellPos 위치와 _collision 배열의 대응하는 좌표값이 다르다.
 		// cellPos의 경우 좌측 최상단 좌표가 0,0이 아니라 MinX,MaxY임.
@@ -94,10 +94,10 @@ namespace Server.Game
 			// _collision[y, x]은 갈수있다 0, 갈수없다 1인데 질의가 CanGo라서 반전시킨다
 			// checkObjects가 false이면 플레이어가 y,x 좌표에 있는지 체크하지 않는다.
 			// => 플레이어는 무시하고 맵에 있는 충돌체만 체크한다는거
-			return !_collision[y, x] && (!checkObjects || _players[y, x] == null); 
+			return !_collision[y, x] && (!checkObjects || _objects[y, x] == null); 
 		}
 
-		public Player Find(Vector2Int cellPos)
+		public GameObject Find(Vector2Int cellPos)
 		{
 			if (cellPos.x < MinX || cellPos.x > MaxX)
 				return null;
@@ -107,40 +107,50 @@ namespace Server.Game
 			// 좌표찾기
 			int x = cellPos.x - MinX;
 			int y = MaxY - cellPos.y;
-			return _players[y, x];
+			return _objects[y, x];
 		}
 
-		// 나중에는 플레이어 대신 더 상위객체가 들어갈거임(몹같은것도 포함하는)
-		public bool ApplyMove(Player player, Vector2Int dest)
-        {
-			PositionInfo posInfo = player.Info.PosInfo;
+		public bool ApplyLeave(GameObject gameObject)
+		{
 			// 플레이어가 정상적인 좌표에 있는지 체크
+			PositionInfo posInfo = gameObject.PosInfo;
 			if (posInfo.PosX < MinX || posInfo.PosX > MaxX)
 				return false;
 			if (posInfo.PosY < MinY || posInfo.PosY > MaxY)
 				return false;
 
-			if (CanGo(dest, checkObjects: true) == false)
-				return false;
-
-            // 목적하는 곳에 갈 수 있으니 이동
-            {
+			// gameObject가 있던 좌표를 null로 밀어버림
+			{
 				// 플레이어의 이동 전 좌표를 해당하는 _players 배열의 위치로 찾아가게 변환
 				int x = posInfo.PosX - MinX;
 				int y = MaxY - posInfo.PosY;
 				// 내 좌표가 처음부터 잘못되어 있다면? 
 				// -> 구한 x,y가 유효범위내에 있다고 확신할수가 없다. -> 위에서 체크
-				if(_players[y, x] == player) // 정말 그 좌표에 있는게 player인지 한번 더 체크, 사실 아니면 진짜 문제있는거임
-					_players[y, x] = null;
+				if (_objects[y, x] == gameObject) // 정말 그 좌표에 있는게 player인지 한번 더 체크, 사실 아니면 진짜 문제있는거임
+					_objects[y, x] = null;
 			}
-            {
-				// dest에 대응하는 _players 내 좌표를 찾는 부분
-				int x = dest.x - MinX;
-				int y = MaxY - dest.y;
-				_players[y, x] = player;
-            }
+
+			return true;
+		}
+
+		// 나중에는 플레이어 대신 더 상위객체가 들어갈거임(몹같은것도 포함하는)
+		// 실질적인 이동 처리
+		public bool ApplyMove(GameObject gameObject, Vector2Int dest)
+        {
+
+			if (ApplyLeave(gameObject) == false) // 플레이어가 정상위치에 있는지 체크 후 -> 그 자리를 비워줌 (이동 전 처리)
+				return false;
+
+			if (CanGo(dest, checkObjects: true) == false)
+				return false;
+
+			// dest(목적지) 좌표값(유니티)에 대응하는  _players배열의 위치를 찾는 부분
+			int x = dest.x - MinX;
+			int y = MaxY - dest.y;
+			_objects[y, x] = gameObject;
 
 			// 실제 좌표 이동
+			PositionInfo posInfo = gameObject.PosInfo;
 			posInfo.PosX = dest.x;
 			posInfo.PosY = dest.y;
 			return true;
@@ -166,7 +176,7 @@ namespace Server.Game
 			int xCount = MaxX - MinX + 1;
 			int yCount = MaxY - MinY + 1;
 			_collision = new bool[yCount, xCount];
-			_players = new Player[yCount, xCount]; // y,x 순서는 취향임
+			_objects = new GameObject[yCount, xCount]; // y,x 순서는 취향임
 
 			// _collision에 충돌정보 입력
 			for (int y = 0; y < yCount; y++)
