@@ -131,6 +131,10 @@ public class PlayerController : CreatureController
             // 주먹질
             _coSkill = StartCoroutine("CoStartPunch");
         }
+        else if (skillId == 2)
+        {
+            _coSkill = StartCoroutine("CoStartShootArrow");
+        }
     }
 
     protected virtual void CheckUpdatedFlag()
@@ -164,19 +168,21 @@ public class PlayerController : CreatureController
 
     IEnumerator CoStartShootArrow()
     {
-        // 화살 생성
-        GameObject go = Managers.Resource.Instantiate("Creature/Arrow");
-        ArrowController ac = go.GetComponent<ArrowController>(); // null이면 즉시 수정해야하니 체크안함
-        // 플레이어가 보고있는 방향으로 쏴야함. 
-        // 키보드를 누르고 있지 않더라도 직전 방향으로라도 쏴야함
-        ac.Dir = Dir;
-        ac.CellPos = CellPos; // 화살은 내 위치 기준으로 발사
+        // 화살 생성 -> 서버의 spawn 패킷으로 하는중
+        //GameObject go = Managers.Resource.Instantiate("Creature/Arrow");
+        //ArrowController ac = go.GetComponent<ArrowController>(); // null이면 즉시 수정해야하니 체크안함
+        //// 플레이어가 보고있는 방향으로 쏴야함. 
+        //// 키보드를 누르고 있지 않더라도 직전 방향으로라도 쏴야함
+        //ac.Dir = Dir;
+        //ac.CellPos = CellPos; // 화살은 내 위치 기준으로 발사
 
         // 대기 시간
-        _rangedSkill = true; // 범위스킬 체크
+        _rangedSkill = true; // 원거리 공격인지 체크
+        State = CreatureState.Skill;
         yield return new WaitForSeconds(0.3f); // 화살 발사 딜레이
         State = CreatureState.Idle;
         _coSkill = null;
+        CheckUpdatedFlag(); // (임시) MyPlayer일때만 CheckUpdatedFlag에서 서버와 통신할거임
     }
 
     public override void OnDamaged()

@@ -15,15 +15,20 @@ namespace Server.Game
         // 무조건 게임 전체 틱을 따라갈 이유가 없다
         public override void Update()
         {
-            if (Owner == null || Room == null)
+            if (Data == null || Data.projectile == null || Owner == null || Room == null)
                 return;
 
             if (_nextMoveTick >= Environment.TickCount64)
                 return;
 
             // 틱돌아옴
-            _nextMoveTick = Environment.TickCount64 + 50;
+            // speed 는 1초에 움직일수 있는 칸의 개수
+            // 1초는 1000ms니까 이걸 speed 값으로 나눠서 
+            // 다음 1칸 이동까지 내가 얼마나 기다려야 하는지(ms) 구함
+            long tick = (long)(1000 / Data.projectile.speed);
+            _nextMoveTick = Environment.TickCount64 + tick;
 
+            // 1칸 이동 처리
             Vector2Int destPos = GetFrontCellPos(); // 내가 진행하는 방향의 바로 앞 좌표
             if (Room.Map.CanGo(destPos))
             {

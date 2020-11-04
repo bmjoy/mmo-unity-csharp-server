@@ -1,10 +1,9 @@
 ﻿using Google.Protobuf.Protocol;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+using System.Text;
 
-namespace Data
+namespace Server.Data
 {
     #region Stat
     [Serializable]
@@ -31,6 +30,8 @@ namespace Data
     }
     #endregion
 
+    // 스킬을 데이터만으로 표현하기는 매우 어려운 편이고 기획에 따라 많이 바뀐다
+    // 데이터 모델링
     #region Skill
     [Serializable]
     public class Skill
@@ -45,7 +46,7 @@ namespace Data
 
     public class ProjectileInfo
     {
-        public string name;
+        public string name; 
         public float speed;
         public int range; // 최대 도달 거리
         public string prefab; // 유니띠용

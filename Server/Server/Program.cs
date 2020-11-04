@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf;
 using Google.Protobuf.Protocol;
+using Server.Data;
 using Server.Game;
 using ServerCore;
 
@@ -23,6 +24,11 @@ namespace Server
 
 		static void Main(string[] args)
 		{
+			ConfigManager.LoadConfig(); // 설정파일 읽어오기
+			DataManager.LoadData(); // 설정파일에 맞춰 데이터 불러오기
+
+			var a = DataManager.StatDict;
+
 			RoomManager.Instance.Add(1); // 서버 시작할때 일단 게임룸 하나 추가, 맵 번호는 1번이라 가정
 
 			// DNS (Domain Name System)
@@ -43,8 +49,7 @@ namespace Server
 			{
 				//JobTimer.Instance.Flush();
 				RoomManager.Instance.Find(1).Update();
-
-				Thread.Sleep(100); // 너무 자주 하지 않도록.. 땜빵임
+				// Thread.Sleep(100); // 너무 자주 하지 않도록.. 땜빵임
 			}
 		}
 	}

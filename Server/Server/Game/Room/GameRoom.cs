@@ -1,5 +1,6 @@
 ﻿using Google.Protobuf;
 using Google.Protobuf.Protocol;
+using Server.Data;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -219,35 +220,48 @@ namespace Server.Game
                 skill.Info.SkillId = skillPacket.Info.SkillId; // 나중에 시트로 뺄거야
                 Broadcast(skill); // 에코서버마냥 전파한다
 
-                if (skillPacket.Info.SkillId == 1)
-                {
-                    // 주먹질
-                    // 데미지 판정 -> 항상 치팅 대비
-                    // 내 공격방향에 적이 있나 없나 체크
-                    // GetFrontCellPos에 MoveDir.None 처리가 없으니 
-                    // 항상 공격자의 위치를 반환해서 아무대나 떄려도 타격이 되는 문제가 있었음
-                    // MoveDir.None이 그냥 키입력 여부를 받는거라 서버에는 필요없으므로 전체적으로 없애기로함
-                    Vector2Int skillPos = player.GetFrontCellPos(info.PosInfo.MoveDir);
-                    GameObject target = Map.Find(skillPos);
-                    if (target != null)
-                    {
-                        Console.WriteLine("Hit GameObject!");
-                    }
-                }
-                else if(skillPacket.Info.SkillId == 2)
-                {
-                    // 화살 생성
-                    // 클라에서도 화살이 날아가는것을 계산하고 있어야 치팅을 방지할수 있다.
-                    Arrow arrow = ObjectManager.Instance.Add<Arrow>();
-                    if (arrow == null)
-                        return;
+                // 이제 DB에서 Id에 해당하는 스킬데이터를 뽑아온다
+                Data.Skill skillData = null;
+                if (DataManager.SkillDict.TryGetValue(skillPacket.Info.SkillId, out skillData) == false)
+                    return;
 
-                    arrow.Owner = player;
-                    arrow.PosInfo.State = CreatureState.Moving;
-                    arrow.PosInfo.MoveDir = player.PosInfo.MoveDir;
-                    arrow.PosInfo.PosX = player.PosInfo.PosX;
-                    arrow.PosInfo.PosY = player.PosInfo.PosY;
-                    EnterGame(arrow); // 치팅방지 + 코드재사용(화살이 생성됐음을 모두에게 알림)
+                // id에 해당하는 스킬이 있다
+                switch (skillData.skillType)
+                {
+                    case SkillType.SkillAuto:
+                        {
+                            // 주먹질
+                            // 데미지 판정 -> 항상 치팅 대비
+                            // 내 공격방향에 적이 있나 없나 체크
+                            // GetFrontCellPos에 MoveDir.None 처리가 없으니 
+                            // 항상 공격자의 위치를 반환해서 아무대나 떄려도 타격이 되는 문제가 있었음
+                            // MoveDir.None이 그냥 키입력 여부를 받는거라 서버에는 필요없으므로 전체적으로 없애기로함
+                            Vector2Int skillPos = player.GetFrontCellPos(info.PosInfo.MoveDir);
+                            GameObject target = Map.Find(skillPos);
+                            if (target != null)
+                            {
+                                Console.WriteLine("Hit GameObject!");
+                            }
+                        }
+                        break;
+                    case SkillType.SkillProjectile:
+                        {
+                            // 화살 생성
+                            // 클라에서도 화살이 날아가는것을 계산하고 있어야 치팅을 방지할수 있다.
+                            // 어떤 투사체인지 구분할수 있는게 필요 (지금은 화살만..)
+                            Arrow arrow = ObjectManager.Instance.Add<Arrow>();
+                            if (arrow == null)
+                                return;
+
+                            arrow.Owner = player;
+                            arrow.Data = skillData; // 투사체를 생성한 주체(스킬)의 정보를 저장
+                            arrow.PosInfo.State = CreatureState.Moving;
+                            arrow.PosInfo.MoveDir = player.PosInfo.MoveDir;
+                            arrow.PosInfo.PosX = player.PosInfo.PosX;
+                            arrow.PosInfo.PosY = player.PosInfo.PosY;
+                            EnterGame(arrow); // 치팅방지 + 코드재사용(화살이 생성됐음을 모두에게 알림)
+                        }
+                        break;
                 }
             }
         }

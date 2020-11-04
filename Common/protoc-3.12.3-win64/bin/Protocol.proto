@@ -36,6 +36,15 @@ enum GameObjectType {
   PROJECTILE = 3;
 }
 
+// proto 파일에는 SKILL_AUTO인데 왜 json 파일 에서는 SkillAuto라고 했냐면
+// 구글 프로토 패킷으로 변환 후 이름이 저렇게 바뀐다.. Protocol.cs 참고
+// 스킬 타입을 정해서 어떤 느낌의 스킬을 날릴지 정하는 경우가 매우 많다.
+enum SkillType {
+  SKILL_NONE = 0;
+  SKILL_AUTO = 1; // 평타 (유도?)
+  SKILL_PROJECTILE = 2;
+}
+
 message S_EnterGame {
   ObjectInfo player = 1;
 }
