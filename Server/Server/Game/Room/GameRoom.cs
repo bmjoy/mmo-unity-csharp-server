@@ -57,6 +57,9 @@ namespace Server.Game
                     _players.Add(gameObject.Id, player); // 해당하는 아이디와 플레이어를 딕셔너리에 삽입
                     player.Room = this;
 
+                    // 이거 안하고 스폰 후 가만히 있으면, 화살같은거 안박히는 버그남
+                    Map.ApplyMove(player, new Vector2Int(player.CellPos.x, player.CellPos.y)); // 맵에다가 나를 이동시켜달라 요청
+
                     // 본인에게 스폰됐다는 정보 전송
                     {
                         S_EnterGame enterPacket = new S_EnterGame();
@@ -66,13 +69,23 @@ namespace Server.Game
                         enterPacket.Player = player.Info;
                         player.Session.Send(enterPacket); // 나에게 내 정보 전송
 
+                        // 입장한 플레이어에게
+                        // 접속중인 다른 플레이어뿐만 아니라 몬스터나 투사체들의 정보도 던져줘야 한다.
                         S_Spawn spawnPacket = new S_Spawn();
+                        
                         foreach (Player p in _players.Values)
                         {
                             // 내 정보는 위에서 보냈으니, 내가 아닌 플레이어들의 정보만 담는다
                             if (player != p)
                                 spawnPacket.Objects.Add(p.Info);
                         }
+
+                        foreach (Monster m in _monsters.Values)
+                            spawnPacket.Objects.Add(m.Info);
+
+                        foreach (Projectile p in _projectiles.Values)
+                            spawnPacket.Objects.Add(p.Info);
+
                         player.Session.Send(spawnPacket); // 나에게 현재 게임에 있는 타인의 정보를 알린다.
                     }
                 }
@@ -81,6 +94,8 @@ namespace Server.Game
                     Monster monster = gameObject as Monster;
                     _monsters.Add(gameObject.Id, monster);
                     monster.Room = this;
+
+                    Map.ApplyMove(monster, new Vector2Int(monster.CellPos.x, monster.CellPos.y)); // 맵에다가 나를 이동시켜달라 요청
                 }
                 else if (type == GameObjectType.Projectile) // 투사체
                 {

@@ -53,7 +53,7 @@ public class MonsterController : CreatureController
     protected override void Init()
     {
         base.Init();
-        AddHpBar();
+
         // State, Dir 값 정해줄때 Animator가 필요한데
         // Init()에서 Animator를 정해주니깐 State나 Dir 값 대입은
         // Init()아래에 있어야 한다.
@@ -136,7 +136,7 @@ public class MonsterController : CreatureController
         Dir = GetDirFromVec(moveCellDir);
 
         // 갈수있나체크
-        if (Managers.Map.CanGo(destPos) && Managers.Object.Find(nextPos) == null)
+        if (Managers.Map.CanGo(destPos) && Managers.Object.FindCreature(nextPos) == null)
         {
             // 갈수있다.
             CellPos = nextPos;
@@ -151,13 +151,6 @@ public class MonsterController : CreatureController
     // 얻어맞은쪽에서 처리
     public override void OnDamaged()
     {
-        // 사망 이펙트 생성
-        GameObject effect = Managers.Resource.Instantiate("Effect/DieEffect");
-        effect.transform.position = transform.position; // 생성위치는 맞은놈 위치
-        effect.GetComponent<Animator>().Play("START");
-        // 이펙트를 0.5초후에 제거해달라고 예약
-        GameObject.Destroy(effect, 0.5f);
-
         // 나를 제거
         Managers.Object.Remove(Id);
         Managers.Resource.Destroy(gameObject);
@@ -176,7 +169,7 @@ public class MonsterController : CreatureController
             Vector3Int randPos = CellPos + new Vector3Int(xRange, yRange, 0);
 
             // 가려는 위치가 이동가능한 타일이고 거기에 아무도 없나?
-            if (Managers.Map.CanGo(randPos) && Managers.Object.Find(randPos) == null)
+            if (Managers.Map.CanGo(randPos) && Managers.Object.FindCreature(randPos) == null)
             {
                 _destCellPos = randPos;
                 State = CreatureState.Moving;
@@ -218,7 +211,7 @@ public class MonsterController : CreatureController
     // 스킬들
     IEnumerator CoStartPunch()
     {
-        GameObject go = Managers.Object.Find(GetFrontCellPos());
+        GameObject go = Managers.Object.FindCreature(GetFrontCellPos());
         if (go != null)
         {
             CreatureController cc = go.GetComponent<CreatureController>();

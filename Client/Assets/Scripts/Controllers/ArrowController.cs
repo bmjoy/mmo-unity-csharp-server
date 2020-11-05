@@ -4,8 +4,9 @@ using static Define;
 
 // 하는 일이 좀 단순함.. 앞으로 나가는거랑 충돌처리
 // CreatureController 상속받는게 과할수도 있지만 공통으로 쓰는게 좀 있어서
+// 이제 CreatureController와는 BaseController컨트롤러를 상속받는 동등한 위치가 되었다
 
-public class ArrowController : CreatureController
+public class ArrowController : BaseController
 {
     protected override void Init()
     {

@@ -21,7 +21,7 @@ class PacketHandler
 	public static void S_LeaveGameHandler(PacketSession session, IMessage packet)
 	{
 		S_LeaveGame leaveGamePacket = packet as S_LeaveGame;
-		Managers.Object.RemoveMyPlayer();
+		Managers.Object.Clear();
 	}
 
 	// 다른 유저들의 정보를 받음
@@ -55,12 +55,12 @@ class PacketHandler
 			return;
 
 		// 정보를 고치기 위해 CreatureController에 접근
-		CreatureController cc = go.GetComponent<CreatureController>();
-		if (cc == null)
+		BaseController bc = go.GetComponent<BaseController>();
+		if (bc == null)
 			return; // or crash 
 
 		// 내 이동은 이미 클라에서 처리했는데, 굳이 서버에서 콜백을 받아다가 덮어쓸 이유는 없다.
-		cc.PosInfo = movePacket.PosInfo;
+		bc.PosInfo = movePacket.PosInfo;
 	}
 
 	public static void S_SkillHandler(PacketSession session, IMessage packet)
@@ -96,6 +96,23 @@ class PacketHandler
 			cc.Hp = changePacket.Hp; // ui 갱신도 같이 됨
 			// UI 갱신
 			Debug.Log($"ChangeHP : {changePacket.Hp}");
+		}
+	}
+
+	public static void S_DieHandler(PacketSession session, IMessage packet)
+	{
+		S_Die diePacket = packet as S_Die;
+
+		// 여기서 찾은 PlayerId가 꼭 나라는 보장은 없다. 스킬은 아무나 쓰니깐
+		GameObject go = Managers.Object.FindById(diePacket.ObjectId);
+		if (go == null)
+			return;
+
+		CreatureController cc = go.GetComponent<CreatureController>();
+		if (cc != null)
+		{
+			cc.Hp = 0;
+			cc.OnDead(); // 해당 크리처를 죽임
 		}
 	}
 }

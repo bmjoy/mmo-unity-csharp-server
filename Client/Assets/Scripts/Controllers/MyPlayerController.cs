@@ -146,7 +146,7 @@ public class MyPlayerController : PlayerController
             // ObjectManager의 Find()를 CanGo() 안에서 호출하느냐
             // 아니면 CanGo()를 호출한대서 같이 호출하느냐 문제가 있는데
             // Find()가 변경될 여지가 있으므로 CanGo()와 분리시켜 놓는게 좋다고 생각
-            if (Managers.Object.Find(destPos) == null)
+            if (Managers.Object.FindCreature(destPos) == null)
             {
                 // 충돌 날 물체가 없다.
                 CellPos = destPos;

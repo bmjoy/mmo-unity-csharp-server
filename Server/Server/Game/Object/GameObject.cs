@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf.Protocol;
 using System;
 using System.Collections.Generic;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 namespace Server.Game
@@ -105,7 +106,24 @@ namespace Server.Game
 
         public virtual void OnDead(GameObject attacker)
         {
+            // 주것다
+            S_Die diePacket = new S_Die();
+            diePacket.ObjectId = Id;
+            diePacket.AttackerId = attacker.Id; // 내가 나를 떄리는 경우도 있다 (낙하)
+            Room.Broadcast(diePacket); // 죽었음을 알린다.
 
+            GameRoom room = Room;
+            Room.LeaveGame(Id); // 방을 나감
+
+            // 죽은 후 초기화 처리
+            Stat.Hp = Stat.MaxHp;
+            PosInfo.State = CreatureState.Idle;
+            PosInfo.MoveDir = MoveDir.Down;
+            PosInfo.PosX = 0;
+            PosInfo.PosY = 0;
+
+            // 재입장, 방을 나가면 Room이 null처리 되니깐.. 위에서 미리 빼놨다 씀
+            room.EnterGame(this);
         }
     }
 }

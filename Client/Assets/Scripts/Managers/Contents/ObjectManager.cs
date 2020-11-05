@@ -80,15 +80,6 @@ public class ObjectManager
         Managers.Resource.Destroy(go);
     }
 
-    public void RemoveMyPlayer()
-    {
-        if (MyPlayer == null)
-            return;
-
-        Remove(MyPlayer.Id);
-        MyPlayer = null;
-    }
-
     public GameObject FindById(int id)
     {
         GameObject go = null;
@@ -97,7 +88,8 @@ public class ObjectManager
     }
 
     // 객체가 적다면 그냥저냥 쓸수있음
-    public GameObject Find(Vector3Int cellPos)
+    // 이제 화살은 CreatureController 상속받지 않아서 따로 만들어야함
+    public GameObject FindCreature(Vector3Int cellPos)
     {
         foreach (GameObject obj in _objects.Values)
         {
@@ -127,11 +119,14 @@ public class ObjectManager
         return null;
     }
 
+    // 퇴장할때 기존 오브젝트를 밀어놓지 않으면
+    // 재입장하면서 _objects에 다시 모든 오브젝트들을 밀어넣기 때문에 id들이 겹쳐버림
     public void Clear()
     {
         foreach (GameObject obj in _objects.Values)
             Managers.Resource.Destroy(obj);
 
         _objects.Clear();
+        MyPlayer = null;
     }
 }

@@ -14,8 +14,8 @@ public class PlayerController : CreatureController
     // CreatureController의 Start와 Update가 자동으로 호출됨
     protected override void Init()
     {
+        // hpbar 붙이는 부분은 CreatureController로 이동
         base.Init();
-        AddHpBar();
     }
 
     // 화살쏘기 이런건 유저만 쓰니깐 UpdateAnimation을 오버라이드 해서 사용
