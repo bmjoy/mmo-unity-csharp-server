@@ -7,6 +7,7 @@ using static Define;
 // 플레이어나 몬스터 컨트롤러의 공통부분을 여기에
 public class CreatureController : MonoBehaviour
 {
+    HpBar _hpBar; // 화살은??
     public int Id { get; set; } // 아이디는 모든 생성된 플레이어들(몹)이 하나는 갖고 있어야됨
 
     StatInfo _stat = new StatInfo();
@@ -21,6 +22,7 @@ public class CreatureController : MonoBehaviour
             _stat.Hp = value.Hp;
             _stat.MaxHp = value.MaxHp;
             _stat.Speed = value.Speed;
+            UpdateHpBar();
         }
     }
 
@@ -28,6 +30,16 @@ public class CreatureController : MonoBehaviour
     {
         get { return Stat.Speed; }
         set { Stat.Speed = value; }
+    }
+
+    public int Hp
+    {
+        get { return Stat.Hp; }
+        set
+        {
+            Stat.Hp = value;
+            UpdateHpBar(); // 이제 딱히 매번 부르지 않아도 된다
+        }
     }
 
     // 일종의 dirty flag로서 유저의 cellpos state dir 셋 중 하나라도 변경사항이 있나 체크
@@ -49,6 +61,28 @@ public class CreatureController : MonoBehaviour
             Dir = value.MoveDir;
             // 각 상태가 변경될 때 애니메이션은 알아서 갱신됨
         }
+    }
+
+    protected void AddHpBar()
+    {
+        GameObject go = Managers.Resource.Instantiate("UI/HpBar", transform);
+        go.transform.localPosition = new Vector3(0, 0.5f, 0);
+        go.name = "HpBar";
+        _hpBar = go.GetComponent<HpBar>(); // sethp 편하게 쓰려고
+        UpdateHpBar();
+    }
+
+    void UpdateHpBar()
+    {
+        if (_hpBar == null)
+            return;
+
+        float ratio = 0.0f;
+        // 3 / 2 = 1 (int끼리 나누는 경우) 한놈을 float로 캐스팅 해야 결과값이 정확하게 나옴
+        if (Stat.MaxHp > 0)
+            ratio = ((float)Hp / Stat.MaxHp);
+
+        _hpBar.SetHpBar(ratio);
     }
 
     public void SyncPos()

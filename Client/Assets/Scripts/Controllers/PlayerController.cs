@@ -15,6 +15,7 @@ public class PlayerController : CreatureController
     protected override void Init()
     {
         base.Init();
+        AddHpBar();
     }
 
     // 화살쏘기 이런건 유저만 쓰니깐 UpdateAnimation을 오버라이드 해서 사용

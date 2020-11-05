@@ -93,7 +93,7 @@ class PacketHandler
 		if (cc != null)
 		{
 			// 체력을 깎자
-			cc.Stat.Hp = changePacket.Hp;
+			cc.Hp = changePacket.Hp; // ui 갱신도 같이 됨
 			// UI 갱신
 			Debug.Log($"ChangeHP : {changePacket.Hp}");
 		}
