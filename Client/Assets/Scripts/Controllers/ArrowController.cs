@@ -30,7 +30,7 @@ public class ArrowController : CreatureController
         }
 
         State = CreatureState.Moving;
-        _speed = 15.0f;
+        //_speed = 15.0f; // 이제 서버에서 쓴다.
 
         base.Init();
     }

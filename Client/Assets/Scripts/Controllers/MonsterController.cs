@@ -59,7 +59,7 @@ public class MonsterController : CreatureController
         State = CreatureState.Idle;
         Dir = MoveDir.Down; // none 빠졌으니 그냥 아래를 바라보게
 
-        _speed = 3.0f;
+        // _speed = 3.0f;
         _rangedSkill = true; //= (Random.Range(0, 2) == 0 ? true : false); // 몬스터 공격방식 결정
 
         if (_rangedSkill)

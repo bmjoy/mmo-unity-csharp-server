@@ -33,6 +33,7 @@ public class ObjectManager
                 MyPlayer.Id = info.ObjectId;
                 // 이렇게 position에 대한 클래스 하나가 있으면 코드 한줄에 모든 pos 관련 정보를 넣어줄수있다.
                 MyPlayer.PosInfo = info.PosInfo;
+                MyPlayer.Stat = info.StatInfo;
                 MyPlayer.SyncPos(); // 스르륵 이동 없이 즉시 좌표이동을 반영
             }
             else
@@ -45,6 +46,7 @@ public class ObjectManager
                 PlayerController pc = go.GetComponent<PlayerController>();
                 pc.Id = info.ObjectId;
                 pc.PosInfo = info.PosInfo;
+                pc.Stat = info.StatInfo;
                 pc.SyncPos();
             }
         }
@@ -61,8 +63,8 @@ public class ObjectManager
             _objects.Add(info.ObjectId, go);
 
             ArrowController ac = go.GetComponent<ArrowController>();
-            ac.Dir = info.PosInfo.MoveDir;
-            ac.CellPos = new Vector3Int(info.PosInfo.PosX, info.PosInfo.PosY, 0);
+            ac.PosInfo = info.PosInfo;
+            ac.Stat = info.StatInfo;
             ac.SyncPos(); // 이건 좀 햇갈리네
         }
 

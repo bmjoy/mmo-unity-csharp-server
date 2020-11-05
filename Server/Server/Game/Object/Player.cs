@@ -13,6 +13,12 @@ namespace Server.Game
         public Player()
         {
             ObjectType = GameObjectType.Player; // 오브젝트 타입을 Player로 변경
+            Speed = 20.0f; // 시트로 빠지겠지만
+        }
+
+        public override void OnDamaged(GameObject attacker, int damage)
+        {
+            Console.WriteLine($"Damage! : {damage}");
         }
     }
 }

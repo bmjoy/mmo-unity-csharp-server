@@ -19,14 +19,23 @@ namespace Server.Game
         // 위의 것들을 get 하는순간 참조를 가져오는거기 때문에 잠궈봤자 그거 무시하고 접근가능
         // 걍 null 체크하고 조심하자
         public GameRoom Room { get; set; } // 들어가있는 게임룸
+
         public ObjectInfo Info { get; set; } = new ObjectInfo();
         // PosInfo는 자주 쓸것같아서 따로 뺐다
         public PositionInfo PosInfo { get; private set; } = new PositionInfo();
+        public StatInfo Stat { get; private set; } = new StatInfo();
+
+        public float Speed // 자주 쓸 것 같으니 열어둠
+        {
+            get { return Stat.Speed; }
+            set { Stat.Speed = value; }
+        }
 
         public GameObject()
         {
             // new ObjectInfo, PositionInfo 해주는게 여기보다 일찍 실행되는갑네?
             Info.PosInfo = PosInfo;
+            Info.StatInfo = Stat;
         }
 
         public Vector2Int CellPos
@@ -73,6 +82,13 @@ namespace Server.Game
             }
 
             return cellPos;
+        }
+
+        // 데미지, 공격자(어그로 시스템, 공격자 보상)
+        // 여러명이 동시에 친다면?
+        public virtual void OnDamaged(GameObject attacker, int damage)
+        {
+            
         }
     }
 }

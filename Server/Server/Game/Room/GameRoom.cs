@@ -253,12 +253,14 @@ namespace Server.Game
                             if (arrow == null)
                                 return;
 
+                            // 데이터 대입
                             arrow.Owner = player;
                             arrow.Data = skillData; // 투사체를 생성한 주체(스킬)의 정보를 저장
                             arrow.PosInfo.State = CreatureState.Moving;
                             arrow.PosInfo.MoveDir = player.PosInfo.MoveDir;
                             arrow.PosInfo.PosX = player.PosInfo.PosX;
                             arrow.PosInfo.PosY = player.PosInfo.PosY;
+                            arrow.Speed = skillData.projectile.speed;
                             EnterGame(arrow); // 치팅방지 + 코드재사용(화살이 생성됐음을 모두에게 알림)
                         }
                         break;

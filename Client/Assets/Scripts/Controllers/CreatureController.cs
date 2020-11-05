@@ -9,9 +9,26 @@ public class CreatureController : MonoBehaviour
 {
     public int Id { get; set; } // 아이디는 모든 생성된 플레이어들(몹)이 하나는 갖고 있어야됨
 
-    //public Grid _grid; // 플레이어가 위치한 맵의 그리드를 받는다.
-    [SerializeField]
-    public float _speed = 5.0f;
+    StatInfo _stat = new StatInfo();
+    public StatInfo Stat
+    {
+        get { return _stat; }
+        set
+        {
+            if (_stat.Equals(value)) // 구글 프로토버퍼에서 제공하는 Equals
+                return;
+
+            _stat.Hp = value.Hp;
+            _stat.MaxHp = value.MaxHp;
+            _stat.Speed = value.Speed;
+        }
+    }
+
+    public float Speed
+    {
+        get { return Stat.Speed; }
+        set { Stat.Speed = value; }
+    }
 
     // 일종의 dirty flag로서 유저의 cellpos state dir 셋 중 하나라도 변경사항이 있나 체크
     // 이게 MyPlayerController에서만 쓰는건데 .. 일단 여따넣음
@@ -300,7 +317,7 @@ public class CreatureController : MonoBehaviour
 
         // 도착 여부 체크
         float dist = moveDir.magnitude; // 목적지까지의 남은 거리
-        if (dist < _speed * Time.deltaTime) // 1틱에 이동 가능한 거리보다 더 적게 남았으면 도착처리
+        if (dist < Speed * Time.deltaTime) // 1틱에 이동 가능한 거리보다 더 적게 남았으면 도착처리
         {
             // 도착
             transform.position = destPos;
@@ -320,7 +337,7 @@ public class CreatureController : MonoBehaviour
         {
             // 아직 가는 중
             // 스르륵 이동 구현부
-            transform.position += moveDir.normalized * _speed * Time.deltaTime;
+            transform.position += moveDir.normalized * Speed * Time.deltaTime;
             State = CreatureState.Moving;
         }
     }
