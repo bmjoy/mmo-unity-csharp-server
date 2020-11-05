@@ -9,6 +9,7 @@ using System.Net;
 using Google.Protobuf.Protocol;
 using Google.Protobuf;
 using Server.Game;
+using Server.Data;
 
 namespace Server
 {
@@ -55,7 +56,7 @@ namespace Server
 
 			// 클라이언트가 서버에 접속성공
 			// DB를 긁어 플레이어 정보를 가져와서 클라에 보내주고..
-			MyPlayer = ObjectManager.Instance.Add<Player>();
+			MyPlayer = ObjectManager.Instance.Add<Player>(); // 플레이어 생성
             {
 				MyPlayer.Info.Name = $"Player_{MyPlayer.Info.ObjectId}";
 				MyPlayer.Info.PosInfo.State = CreatureState.Idle;
@@ -63,6 +64,11 @@ namespace Server
 				// 초기값이 0인 경우에는 디버깅할때 값 자체가 안떠서 버그처럼 보이는데 버그는 아님.
 				MyPlayer.Info.PosInfo.PosX = 0;
 				MyPlayer.Info.PosInfo.PosY = 0;
+
+				StatInfo stat = null;
+				DataManager.StatDict.TryGetValue(1, out stat);
+				MyPlayer.Stat.MergeFrom(stat); // stat에 있는 정보를 MyPlayer.Stat에 하나하나 대입
+
 				MyPlayer.Session = this;
             }
 

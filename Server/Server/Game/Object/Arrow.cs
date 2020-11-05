@@ -51,8 +51,8 @@ namespace Server.Game
                     // 아야 -> 피를 어디서 깎을거냐? -> 맞은쪽이 처리 (맞은쪽의 스펙(버프) 계산때문에 얻어맞은쪽이 직접 처리하는게 편함)
                     // 공격자 자체를 넣을지 나를 때린 오브젝트를 넣을지?
                     // 여기서는 공격자 자체를 넣었는데, owner변수로 누가 공격했는지도 알 수 있다
-                    target.OnDamaged(this, Data.damage);
-                    Console.WriteLine($"Damage : {Data.damage}");
+                    target.OnDamaged(this, Data.damage + Owner.Stat.Attack);
+                    Console.WriteLine($"Damage : {Data.damage + Owner.Stat.Attack}");
                 }
 
                 // 벽쾅 -> 소멸

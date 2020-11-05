@@ -88,7 +88,24 @@ namespace Server.Game
         // 여러명이 동시에 친다면?
         public virtual void OnDamaged(GameObject attacker, int damage)
         {
-            
+            Stat.Hp = Math.Max(Stat.Hp - damage, 0); // -hp방지
+
+            // 모두에게 알린다 -> BroadCasting Packet
+            S_ChangeHp changePacket = new S_ChangeHp();
+            changePacket.ObjectId = Id;
+            changePacket.Hp = Stat.Hp;
+            Room.Broadcast(changePacket); // 방에 있는 모두에게 나 얻어맞았다고 전송
+
+            if (Stat.Hp <= 0)
+            {
+                Stat.Hp = 0;
+                OnDead(attacker);
+            }
+        }
+
+        public virtual void OnDead(GameObject attacker)
+        {
+
         }
     }
 }

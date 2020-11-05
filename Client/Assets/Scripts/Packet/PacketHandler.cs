@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf;
 using Google.Protobuf.Protocol;
 using ServerCore;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -76,6 +77,25 @@ class PacketHandler
 		if (pc != null)
 		{
 			pc.UseSkill(skillPacket.Info.SkillId);
+		}
+	}
+
+    public static void S_ChangeHpHandler(PacketSession session, IMessage packet)
+    {
+		S_ChangeHp changePacket = packet as S_ChangeHp;
+
+		// 여기서 찾은 PlayerId가 꼭 나라는 보장은 없다. 스킬은 아무나 쓰니깐
+		GameObject go = Managers.Object.FindById(changePacket.ObjectId);
+		if (go == null)
+			return;
+
+		CreatureController cc = go.GetComponent<CreatureController>();
+		if (cc != null)
+		{
+			// 체력을 깎자
+			cc.Stat.Hp = changePacket.Hp;
+			// UI 갱신
+			Debug.Log($"ChangeHP : {changePacket.Hp}");
 		}
 	}
 }

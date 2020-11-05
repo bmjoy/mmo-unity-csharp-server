@@ -6,25 +6,28 @@ using System.Text;
 namespace Server.Data
 {
     #region Stat
-    [Serializable]
-    public class Stat
-    {
-        public int level;
-        public int maxHp;
-        public int attack;
-        public int totalExp;
-    }
+    //[Serializable]
+    //public class Stat
+    //{
+    //    public int level;
+    //    public int maxHp;
+    //    public int attack;
+    //    public int totalExp;
+    //}
 
     [Serializable]
-    public class StatData : ILoader<int, Stat>
+    public class StatData : ILoader<int, StatInfo>
     {
-        public List<Stat> stats = new List<Stat>();
+        public List<StatInfo> stats = new List<StatInfo>();
 
-        public Dictionary<int, Stat> MakeDict()
+        public Dictionary<int, StatInfo> MakeDict()
         {
-            Dictionary<int, Stat> dict = new Dictionary<int, Stat>();
-            foreach (Stat stat in stats)
-                dict.Add(stat.level, stat);
+            Dictionary<int, StatInfo> dict = new Dictionary<int, StatInfo>();
+            foreach (StatInfo stat in stats)
+            {
+                stat.Hp = stat.MaxHp; // 초기 피는 만피로
+                dict.Add(stat.Level, stat);
+            }
             return dict;
         }
     }
