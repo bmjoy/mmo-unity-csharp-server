@@ -52,7 +52,16 @@ public class ObjectManager
         }
         else if (objectType == GameObjectType.Monster)
         {
+            // 몬스터 생성
+            GameObject go = Managers.Resource.Instantiate("Creature/Monster");
+            go.name = info.Name;
+            _objects.Add(info.ObjectId, go);
 
+            MonsterController mc = go.GetComponent<MonsterController>();
+            mc.Id = info.ObjectId;
+            mc.PosInfo = info.PosInfo;
+            mc.Stat = info.StatInfo;
+            mc.SyncPos();
         }
         else if (objectType == GameObjectType.Projectile)
         {
@@ -67,7 +76,6 @@ public class ObjectManager
             ac.Stat = info.StatInfo;
             ac.SyncPos(); // 이건 좀 햇갈리네
         }
-
     }
 
     public void Remove(int id)

@@ -133,13 +133,13 @@ public class BaseController : MonoBehaviour
     public MoveDir GetDirFromVec(Vector3Int dir)
     {
         if (dir.x > 0)
-            return Dir = MoveDir.Right;
+            return MoveDir.Right;
         else if (dir.x < 0)
-            return Dir = MoveDir.Left;
+            return MoveDir.Left;
         else if (dir.y > 0)
-            return Dir = MoveDir.Up;
+            return MoveDir.Up;
         else
-            return Dir = MoveDir.Down;
+            return MoveDir.Down;
     }
 
     // 내가 바라보는 방향의 바로 앞 Cell 포지션 (타격처리용)
@@ -281,6 +281,7 @@ public class BaseController : MonoBehaviour
         UpdateAnimation();
     }
 
+    // StateMachine 유한상태기계 -> BehaviorTree 쓰는 경우가 많다
     // Update에 똑같은거 때려넣지 말고 필요하면 UpdateController()를 재정의
     protected virtual void UpdateController()
     {

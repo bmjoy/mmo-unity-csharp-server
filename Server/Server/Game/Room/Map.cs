@@ -52,7 +52,16 @@ namespace Server.Game
         {
 			return new Vector2Int(a.x + b.x, a.y + b.y);
         }
-    }
+
+		public static Vector2Int operator -(Vector2Int a, Vector2Int b)
+		{
+			return new Vector2Int(a.x - b.x, a.y - b.y);
+		}
+
+		public float magnitude { get { return (float)Math.Sqrt(sqrMagnitude); } } // 이걸 루트씌우믄 벡터크기고
+		public int sqrMagnitude { get { return (x * x + y * y); } } // 피타고라스 두번한게 벡터크기 제곱이고
+		public int cellDistFromZero { get { return Math.Abs(x) + Math.Abs(y); } } // cell 좌표를 입력받아서 좌로 몇칸 우로 몇칸가야 따라잡는지 뱉어줌
+	}
 
 	// 실시간으로 맵을 로드 및 삭제
 	// 맵에 딸린 충돌 정보 로드
@@ -200,9 +209,14 @@ namespace Server.Game
 		int[] _cost = new int[] { 10, 10, 10, 10 };
 
 		// 셀 기반 위치 입력 -> 내부적으로는 _collision 배열기반 위치 -> 셀 기반 위치값을 반환
-		public List<Vector2Int> FindPath(Vector2Int startCellPos, Vector2Int destCellPos, bool ignoreDestCollision = false)
+		public List<Vector2Int> FindPath(Vector2Int startCellPos, Vector2Int destCellPos, bool checkObjects = true)
 		{
-			// ignoreDestCollision 최종 목적지를 충돌처리 할지 여부
+			// checkObjects = ture -> 길찾기시 다른 충돌판정 오브젝트들을 모두 고려(몹,다른플레이어까지), false는 벽정도만 고려함
+
+			// 일단 내가 가는 경로에 아무것도 없다 생각하고 계산하고
+			// 가는길에 뭔가 있으면 다시 계산을 하는 경우가 많다
+
+			// checkObjects 최종 목적지를 충돌처리 할지 여부
 			// 만약 목적지에 플레이어가 있어서 못간다고 처리하면 안되니깐, 무조건 간다고 처리하게
 
 			List<Pos> path = new List<Pos>();
@@ -260,9 +274,9 @@ namespace Server.Game
 					// 유효 범위를 벗어났으면 스킵
 					// 벽으로 막혀서 갈 수 없으면 스킵
 					// 목적지를 충돌처리 시킬거면 스킵 
-					if (!ignoreDestCollision || next.Y != dest.Y || next.X != dest.X)
+					if (next.Y != dest.Y || next.X != dest.X)
 					{
-						if (CanGo(Pos2Cell(next)) == false) // CellPos
+						if (CanGo(Pos2Cell(next), checkObjects) == false) // CellPos
 							continue;
 					}
 

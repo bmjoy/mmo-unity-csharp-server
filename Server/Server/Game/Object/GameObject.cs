@@ -32,6 +32,23 @@ namespace Server.Game
             set { Stat.Speed = value; }
         }
 
+        public MoveDir Dir
+        {
+            get { return PosInfo.MoveDir; }
+            set { PosInfo.MoveDir = value; }
+        }
+
+        public CreatureState State
+        {
+            get { return PosInfo.State; }
+            set { PosInfo.State = value; }
+        }
+
+        public virtual void Update()
+        {
+            // 누군가는 쓰고싶어할수있으니
+        }
+
         public GameObject()
         {
             // new ObjectInfo, PositionInfo 해주는게 여기보다 일찍 실행되는갑네?
@@ -83,6 +100,19 @@ namespace Server.Game
             }
 
             return cellPos;
+        }
+
+        // 외부에서 쓸 수도 있으니
+        public static MoveDir GetDirFromVec(Vector2Int dir)
+        {
+            if (dir.x > 0)
+                return MoveDir.Right;
+            else if (dir.x < 0)
+                return MoveDir.Left;
+            else if (dir.y > 0)
+                return MoveDir.Up;
+            else
+                return MoveDir.Down;
         }
 
         // 데미지, 공격자(어그로 시스템, 공격자 보상)

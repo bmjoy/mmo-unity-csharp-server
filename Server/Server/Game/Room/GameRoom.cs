@@ -16,7 +16,7 @@ namespace Server.Game
         // 각 오브젝트 타입별로 따로따로 딕셔너리를 만들던지
         // 딕셔너리 하나에 다 때려넣던지
         // 분리해서 관리하는게 나중에 브로드캐스팅 할때 편함. -> 빠름
-        Dictionary<int, Player> _players = new Dictionary<int, Player>();
+        Dictionary<int, Player> _players = new Dictionary<int, Player>(); // 플레이어 목록
         Dictionary<int, Monster> _monsters = new Dictionary<int, Monster>();
         Dictionary<int, Projectile> _projectiles = new Dictionary<int, Projectile>();
         public Map Map { get; private set; } = new Map();
@@ -24,6 +24,11 @@ namespace Server.Game
         public void Init(int mapId)
         {
             Map.LoadMap(mapId);
+
+            // 임시 : 몬스터 생성
+            Monster monster = ObjectManager.Instance.Add<Monster>();
+            monster.CellPos = new Vector2Int(5, 5);
+            EnterGame(monster);
         }
 
         // 클라는 1초당 120프렘정도 업댓함
@@ -33,6 +38,11 @@ namespace Server.Game
         {
             lock (_lock)
             {
+                foreach (Monster monster in _monsters.Values)
+                {
+                    monster.Update();
+                }
+
                 foreach (Projectile projectile in _projectiles.Values)
                 {
                     projectile.Update();
@@ -281,6 +291,18 @@ namespace Server.Game
                         break;
                 }
             }
+        }
+
+        // 같은 게임룸에 접속중인 모든 플레이어 대상으로 검색.. 무겁다
+        public Player FindPlayer(Func<GameObject, bool> condition)
+        {
+            foreach (Player player in _players.Values)
+            {
+                if (condition.Invoke(player))
+                    return player;
+            }
+
+            return null;
         }
 
         public void Broadcast(IMessage packet)
