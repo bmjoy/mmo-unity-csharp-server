@@ -76,4 +76,9 @@ public class CreatureController : BaseController
         // 이펙트를 0.5초후에 제거해달라고 예약
         GameObject.Destroy(effect, 0.5f);
     }
+
+    public virtual void UseSkill(int skillId)
+    {
+
+    }
 }

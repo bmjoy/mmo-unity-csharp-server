@@ -73,7 +73,7 @@ class PacketHandler
 			return;
 
 		// 정보를 고치기 위해 CreatureController에 접근
-		PlayerController pc = go.GetComponent<PlayerController>();
+		CreatureController pc = go.GetComponent<CreatureController>();
 		if (pc != null)
 		{
 			pc.UseSkill(skillPacket.Info.SkillId);

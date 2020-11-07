@@ -171,6 +171,9 @@ public class BaseController : MonoBehaviour
     // 상태에 따른 애니메이션을 자동으로 호출한다. 지금은 state와 dir의 영향을 받음
     protected virtual void UpdateAnimation()
     {
+        if (_animator == null || _sprite == null) // 애니메이터나 스프라이트가 없으면 거름
+            return;
+
         // switch 문으로 해도 되지만 내부에서 또 switch 쓸거기 때문에 가독성을 위해 if~else로
         if (State == CreatureState.Idle)
         {
@@ -272,11 +275,12 @@ public class BaseController : MonoBehaviour
         // Vector3(0.5f, 0.5f) 값은 캐릭터가 셀 안에 들어가게 하기 위한 보정치
         Vector3 pos = Managers.Map.CurrentGrid.CellToWorld(CellPos) + new Vector3(0.5f, 0.5f);
         transform.position = pos;
-
+        
+        /// 패킷정보를 받아서 캐릭터를 생성하고 여기 들어오기 때문에 방향이라던가 상태가 하드코딩된걸로 덮어씌워진다.
         // 서버에서 아무값도 안왔다면 하단의 설정대로 하고
         // 값이 왔으면 그걸로 덮어씌워질거임
-        State = CreatureState.Idle;
-        Dir = MoveDir.Down;
+        //State = CreatureState.Idle;
+        //Dir = MoveDir.Down;
         // CellPos = new Vector3Int(0, 0, 0); // 위치를 강제로 건드는 코드는 조심
         UpdateAnimation();
     }

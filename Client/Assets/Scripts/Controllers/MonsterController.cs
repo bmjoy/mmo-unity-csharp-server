@@ -8,8 +8,8 @@ public class MonsterController : CreatureController
 {
     private Coroutine _coSkill;
 
-    [SerializeField] 
-    bool _rangedSkill = false; // 근접공격인지 원거리공격인지
+    // [SerializeField] 
+    // bool _rangedSkill = false; // 근접공격인지 원거리공격인지
 
     //public override CreatureState State
     //{
@@ -30,11 +30,11 @@ public class MonsterController : CreatureController
         // State, Dir 값 정해줄때 Animator가 필요한데
         // Init()에서 Animator를 정해주니깐 State나 Dir 값 대입은
         // Init()아래에 있어야 한다.
-        State = CreatureState.Idle;
-        Dir = MoveDir.Down; // none 빠졌으니 그냥 아래를 바라보게
+        //State = CreatureState.Idle;
+        //Dir = MoveDir.Down; // none 빠졌으니 그냥 아래를 바라보게
 
         // _speed = 3.0f;
-        _rangedSkill = (Random.Range(0, 2) == 0 ? true : false); // 몬스터 공격방식 결정 (애니메이션재생)
+        // _rangedSkill = (Random.Range(0, 2) == 0 ? true : false); // 몬스터 공격방식 결정 (애니메이션재생)
 
         // 몬스터 공격은 서버에서 연산한다
     }
@@ -117,6 +117,15 @@ public class MonsterController : CreatureController
         //Managers.Resource.Destroy(gameObject);
     }
 
+    public override void UseSkill(int skillId)
+    {
+        if (skillId == 1)
+        {
+            // 스킬 이후에 움직인다면 서버가 State를 Move로 변경시킬거니깐 원상태로 돌릴 필요는 없다.
+            State = CreatureState.Skill;
+        }
+    }
+
     //private IEnumerator CoPatrol()
     //{
     //    int waitSeconds = Random.Range(1, 4);
@@ -169,37 +178,38 @@ public class MonsterController : CreatureController
     //    }
     //}
 
+    /// 서버로 갔다
     // 스킬들
-    IEnumerator CoStartPunch()
-    {
-        GameObject go = Managers.Object.FindCreature(GetFrontCellPos());
-        if (go != null)
-        {
-            CreatureController cc = go.GetComponent<CreatureController>();
-            if (cc != null)
-                cc.OnDamaged();
-        }
+    //IEnumerator CoStartPunch()
+    //{
+    //    GameObject go = Managers.Object.FindCreature(GetFrontCellPos());
+    //    if (go != null)
+    //    {
+    //        CreatureController cc = go.GetComponent<CreatureController>();
+    //        if (cc != null)
+    //            cc.OnDamaged();
+    //    }
 
-        // 대기 시간
-        yield return new WaitForSeconds(0.5f);
-        State = CreatureState.Moving;
-        _coSkill = null;
-    }
+    //    // 대기 시간
+    //    yield return new WaitForSeconds(0.5f);
+    //    State = CreatureState.Moving;
+    //    _coSkill = null;
+    //}
 
-    IEnumerator CoStartShootArrow()
-    {
-        // 화살 생성
-        GameObject go = Managers.Resource.Instantiate("Creature/Arrow");
+    //IEnumerator CoStartShootArrow()
+    //{
+    //    // 화살 생성
+    //    GameObject go = Managers.Resource.Instantiate("Creature/Arrow");
 
-        // 내가 바라보는 방향으로 셋팅
-        ArrowController ac = go.GetComponent<ArrowController>(); // null이면 즉시 수정해야하니 체크안함
-        ac.Dir = Dir;
-        ac.CellPos = CellPos; // 화살은 내 위치 기준으로 발사
+    //    // 내가 바라보는 방향으로 셋팅
+    //    ArrowController ac = go.GetComponent<ArrowController>(); // null이면 즉시 수정해야하니 체크안함
+    //    ac.Dir = Dir;
+    //    ac.CellPos = CellPos; // 화살은 내 위치 기준으로 발사
 
-        // 대기 시간
-        yield return new WaitForSeconds(0.3f); // 화살 발사 딜레이
-        // 대기상태로 돌아감. -> 바로 움직이게 바꿈
-        State = CreatureState.Moving;
-        _coSkill = null;
-    }
+    //    // 대기 시간
+    //    yield return new WaitForSeconds(0.3f); // 화살 발사 딜레이
+    //    // 대기상태로 돌아감. -> 바로 움직이게 바꿈
+    //    State = CreatureState.Moving;
+    //    _coSkill = null;
+    //}
 }

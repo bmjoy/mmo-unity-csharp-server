@@ -1,4 +1,5 @@
 ﻿using Google.Protobuf.Protocol;
+using Server.Data;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -68,6 +69,7 @@ namespace Server.Game
             State = CreatureState.Moving; // Idle 상태 끝내고, 유저를 패러가자
         }
 
+        int _skillRange = 1;
         long _nextMoveTick = 0;
         protected virtual void UpdateMoving()
         {
@@ -81,15 +83,19 @@ namespace Server.Game
             {
                 _target = null;
                 State = CreatureState.Idle;
+                BroadcastMove(); // 내가 idle 상태가 됐음을 알린다.
                 return;
             }
 
+
+            Vector2Int dir = _target.CellPos - CellPos; // 방향벡터
+            int dist = dir.cellDistFromZero; // 적과의 거리가 가로몇칸세로몇칸 나는지 합쳐서 뱉어줌
             // 대충 계산해봐도 멀리있는 경우
-            int dist = (_target.CellPos - CellPos).cellDistFromZero; // 적과의 거리가 가로몇칸세로몇칸 나는지 합쳐서 뱉어줌
             if(dist == 0 || dist > _chaseCellDist)
             {
                 _target = null;
                 State = CreatureState.Idle;
+                BroadcastMove();
                 return;
             }
 
@@ -102,14 +108,27 @@ namespace Server.Game
                 // 추적포기
                 _target = null; 
                 State = CreatureState.Idle;
+                BroadcastMove();
                 return;
             }
 
-            // 이동준비완료
+            // 스킬을 사용할지 체크
+            // 스킬범위안에 있고 + x,y축중 하나가 동일하면 (일직선상)
+            if(dist <= _skillRange && (dir.x == 0 || dir.y == 0))
+            {
+                _coolTick = 0;
+                State = CreatureState.Skill;
+                return;
+            }
+
+            // 이동 시작
             Dir = GetDirFromVec(path[1] - CellPos);
             Room.Map.ApplyMove(this, path[1]); // 맵에다가 위치갱신하라고 알림
+            BroadcastMove();
+        }
 
-            // 다른 플레이어에게도 알려준다
+        void BroadcastMove()
+        {
             S_Move movePacket = new S_Move
             {
                 ObjectId = Id,
@@ -118,9 +137,67 @@ namespace Server.Game
             Room.Broadcast(movePacket);
         }
 
+        // update 방식이라서 딜레이 넣을거면 죄다 tick 체크해야함 ㅡㅡ;
+        long _coolTick = 0;
         protected virtual void UpdateSkill()
         {
+            // _coolTick이 0이라는것은 스킬 사용할 준비가 완료됐음을 뜻함
+            if(_coolTick == 0)
+            {
+                // 유효한 타겟인지 체크
+                if(_target == null || _target.Room != Room || _target.Hp == 0)
+                {
+                    _target = null;
+                    State = CreatureState.Moving;
+                    BroadcastMove(); // 좀 비효율적이지만..
+                    return;
+                }
 
+                // 스킬이 아직 사용 가능한지
+                Vector2Int dir = (_target.CellPos - CellPos);
+                int dist = dir.cellDistFromZero;
+                bool canUseSkill = (dist <= _skillRange && (dir.x == 0 || dir.y == 0));                
+                if (canUseSkill == false)
+                {
+                    // 스킬을 사용할 수 없는 상태가 됨                 
+                    // 플레이어가 도망가거나 게임 자체를 나가거나 할 때 그걸 다시 쫓을지는 Moving 상태에서 판단
+                    State = CreatureState.Moving;
+                    BroadcastMove();
+                    return;
+                }
+
+                // 타게팅 방향 주시
+                MoveDir lookDir = GetDirFromVec(dir); // 상대방 - 내위치 = 내가 상대방을 바라보는 방향
+                if(Dir != lookDir)
+                {
+                    Dir = lookDir; // 모가지를 돌리고
+                    BroadcastMove(); // 알림
+                }
+
+                Skill skillData = null;
+                // 몬스터 시트를 따로 빼서 몬스터에 연결된 스킬과 아이디를 맵핑
+                DataManager.SkillDict.TryGetValue(1, out skillData);
+
+                // 데미지 판정
+                _target.OnDamaged(this, skillData.damage + Stat.Attack);
+
+                // 스킬 사용 Broadcast
+                S_Skill skill = new S_Skill() { Info = new SkillInfo() };
+                skill.ObjectId = Id;
+                skill.Info.SkillId = skillData.id;
+                Room.Broadcast(skill); // 몹이 스킬을 쓴다고 알림
+
+                // 스킬 쿨타임 시작
+                int coolTick = (int)(1000 * skillData.cooldown); // 단위 ms임
+                _coolTick = Environment.TickCount64 + coolTick; // 다음 tick 시간 구함
+            }
+
+            // 다시 스킬을 사용할 준비가 됐는지 여부            
+            if (_coolTick > Environment.TickCount64)
+                return;
+
+            // 햇갈릴수도 있겠네
+            _coolTick = 0; //_coolTick이 0이면 스킬사용 준비가 됐다는 뜻이다.
         }
 
         protected virtual void UpdateDead()
