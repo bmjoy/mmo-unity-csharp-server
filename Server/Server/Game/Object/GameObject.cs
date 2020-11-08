@@ -142,14 +142,20 @@ namespace Server.Game
 
         public virtual void OnDead(GameObject attacker)
         {
-            // 주것다
+            // 죽자마자 방을 나가버려서
+            // Room이 null로 밀렸는데 JobQueue때문에 실행시점이 늦춰져서 터지는 경우가 있다..
             S_Die diePacket = new S_Die();
             diePacket.ObjectId = Id;
             diePacket.AttackerId = attacker.Id; // 내가 나를 떄리는 경우도 있다 (낙하)
             Room.Broadcast(diePacket); // 죽었음을 알린다.
-
+            
+            // 실행시점이 뒤로 밀리면서 문제들이 생김
             GameRoom room = Room;
-            Room.LeaveGame(Id); // 방을 나감
+            // room.Push(room.LeaveGame, Id);// 실행 시점이 코드 순서대로임을 보장 못함
+            // 그래서 그냥 쓴다, 이래도 되는 이유는 OnDead 호출 자체가
+            // JobSerializer에 의해서 되고 있기 떄문에 -> 이미 쓰레드를 잡아서 일을 하는 도중에 일이 추가되는것뿐임.
+            // 너무 무거운 작업이 아니라면 괜찮지 않나
+            room.LeaveGame(Id); // 방을 나감
 
             // 죽은 후 초기화 처리
             Stat.Hp = Stat.MaxHp;

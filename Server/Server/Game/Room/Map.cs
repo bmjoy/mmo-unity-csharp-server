@@ -121,6 +121,12 @@ namespace Server.Game
 
 		public bool ApplyLeave(GameObject gameObject)
 		{
+			// null 체크는 중요..
+			if (gameObject.Room == null)
+				return false;
+			if (gameObject.Room.Map != this)
+				return false;
+
 			// 플레이어가 정상적인 좌표에 있는지 체크
 			PositionInfo posInfo = gameObject.PosInfo;
 			if (posInfo.PosX < MinX || posInfo.PosX > MaxX)
@@ -146,8 +152,12 @@ namespace Server.Game
 		// 실질적인 이동 처리
 		public bool ApplyMove(GameObject gameObject, Vector2Int dest)
         {
-
 			if (ApplyLeave(gameObject) == false) // 플레이어가 정상위치에 있는지 체크 후 -> 그 자리를 비워줌 (이동 전 처리)
+				return false;
+
+			if (gameObject.Room == null)
+				return false;
+			if (gameObject.Room.Map != this)
 				return false;
 
 			if (CanGo(dest, checkObjects: true) == false)

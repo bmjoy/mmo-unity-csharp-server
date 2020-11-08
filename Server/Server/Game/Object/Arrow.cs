@@ -56,7 +56,7 @@ namespace Server.Game
                 }
 
                 // 벽쾅 -> 소멸
-                Room.LeaveGame(Id); // 화살이 떠납니다
+                Room.Push(Room.LeaveGame, Id);
             }
         }
     }

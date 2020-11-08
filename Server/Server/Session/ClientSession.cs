@@ -73,7 +73,8 @@ namespace Server
             }
 
 			// 지금 방이 1번방밖에 없다
-			RoomManager.Instance.Find(1).EnterGame(MyPlayer);
+			GameRoom room = RoomManager.Instance.Find(1);
+			room.Push(room.EnterGame, MyPlayer);
 		}
 
 		public override void OnRecvPacket(ArraySegment<byte> buffer)
@@ -82,8 +83,9 @@ namespace Server
 		}
 
 		public override void OnDisconnected(EndPoint endPoint)
-		{
-			RoomManager.Instance.Find(1).LeaveGame(MyPlayer.Info.ObjectId); // 게임룸에서 퇴장
+		{			
+			GameRoom room = RoomManager.Instance.Find(1);
+			room.Push(room.LeaveGame, MyPlayer.Info.ObjectId); // LeaveGame
 
 			SessionManager.Instance.Remove(this);
 

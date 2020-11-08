@@ -42,6 +42,7 @@ namespace Server.Game
             }
         }
 
+        // 플레이어를 직접 참조해서 쓸 필요가 있는가?
         Player _target; // 이렇게 참조값으로 저장해도 되고, id만 받아놔도 됨
         int _searchCellDist = 10; // xy합쳐서 10칸이내면 사정거리라 가정함
         int _chaseCellDist = 20; // 거리가 20이상 벌어질때까지 쫒는다

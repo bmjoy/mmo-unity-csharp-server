@@ -32,7 +32,7 @@ class PacketHandler
 		if (room == null)
 			return;
 
-		room.HandleMove(player, movePacket); // 이동패킷 처리를 안전하게
+		room.Push(room.HandleMove, player, movePacket); // 이동패킷 처리를 안전하게
 	}
 
     public static void C_SkillHandler(PacketSession session, IMessage packet)
@@ -48,6 +48,6 @@ class PacketHandler
 		if (room == null)
 			return;
 
-		room.HandleSkill(player, skillPacket);
+		room.Push(room.HandleSkill, player, skillPacket);
 	}
 }
