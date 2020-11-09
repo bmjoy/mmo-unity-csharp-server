@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 namespace Server.Game
 {
+    // 기존 lock 대신 JobSerializer를 왜 썼는지 생각해보자 -> 모든 함수마다 lock걸어버리면 경합이 심해져서 싱글쓰레드와 별 차이가 없어짐.
     // JobSerializer를 컴포넌트로 갖고있는게 낫지 않나
     // GameRoom에서 하는 모든 작업은 즉시 실행됨을 보장하지 않는다.
     public class GameRoom : JobSerializer
@@ -32,15 +33,15 @@ namespace Server.Game
             monster.CellPos = new Vector2Int(5, 5);
             EnterGame(monster);
 
-            TestTimer();
+            // TestTimer();
         }
         
         // Test
-        void TestTimer()
-        {
-            Console.WriteLine("TestTimer");
-            PushAfter(100, TestTimer); // JobTimer에 자신을 밀어넣음.
-        }
+        //void TestTimer()
+        //{
+        //    Console.WriteLine("TestTimer");
+        //    PushAfter(100, TestTimer); // JobTimer에 자신을 밀어넣음.
+        //}
 
 
         // 클라는 1초당 120프렘정도 업댓함
@@ -149,9 +150,9 @@ namespace Server.Game
                 if (_players.Remove(objectId, out player) == false) // 딕셔너리에서 지우고
                     return; // 지울 플레이어가 없다.
 
+                // room이 null이면 ApplyLeave 처리가 안됨
+                Map.ApplyLeave(player); // 맵에다가도 내가 나갔음을 처리
                 player.Room = null; // player에 지정된 룸을 밀고
-                                    // 맵에다가도 내가 나갔음을 처리
-                Map.ApplyLeave(player);
 
                 // 본인에게 정보 전송
                 {

@@ -54,12 +54,17 @@ class PacketHandler
 		if (go == null)
 			return;
 
+		// 내 이동은 이미 클라에서 처리했는데, 굳이 서버에서 콜백을 받아다가 덮어쓸 이유는 없지않을까?
+		// 난 이미 이동했지만 서버는 직전 좌표를 던져줘서 나를 강제로 이전 좌표에 이동시킬수가 있다.
+		// 조작중인 플레이어의 이동은 전적으로 클라이언트에 의지한다 서버는 통보만 받음
+		if (Managers.Object.MyPlayer.Id == movePacket.ObjectId)
+			return;
+
 		// 정보를 고치기 위해 CreatureController에 접근
 		BaseController bc = go.GetComponent<BaseController>();
 		if (bc == null)
 			return; // or crash 
 
-		// 내 이동은 이미 클라에서 처리했는데, 굳이 서버에서 콜백을 받아다가 덮어쓸 이유는 없다.
 		bc.PosInfo = movePacket.PosInfo;
 	}
 

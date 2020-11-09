@@ -107,15 +107,15 @@ public class MyPlayerController : PlayerController
     // 움직이고 있다는 정보는 내가 조작하고 있는 플레이어만 보내면 된다.
     protected override void MoveToNextPos()
     {
-        // 내가 키보드 방향키에서 손을 떼면 -> 대기
         if (_moveKeyPressed == false)
         {
             State = CreatureState.Idle;
             CheckUpdatedFlag(); // 얘 호출은 일단 해줘야함
             return;
         }
+        // 내가 이동키를 누르고 있으면
 
-        // 이동
+        // 이동해야하는 좌표 연산
         Vector3Int destPos = CellPos;
         switch (Dir)
         {
@@ -140,6 +140,8 @@ public class MyPlayerController : PlayerController
         // _dir이 None이 아니면 어차피 Moving 상태이고 싶은거니깐 이제 필요없다.
         // State = CreatureState.Moving;
 
+        // 선 이동 -> 후 서버 통보
+        // 이동이 가능하면 즉시 이동 후 -> 서버에 이동할거라고 패킷보냄
         // 이제 맵 매니저에게 허락받고 움직여야함
         if (Managers.Map.CanGo(destPos))
         {
