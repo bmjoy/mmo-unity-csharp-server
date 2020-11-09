@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Google.Protobuf;
 using Google.Protobuf.Protocol;
 using Server.Data;
+using Server.DB;
 using Server.Game;
 using ServerCore;
 
@@ -37,6 +38,13 @@ namespace Server
 		{
 			ConfigManager.LoadConfig(); // 설정파일 읽어오기
 			DataManager.LoadData(); // 설정파일에 맞춰 데이터 불러오기
+
+			// DB Test
+			using (AppDbContext db = new AppDbContext())
+            {
+				db.Accounts.Add(new AccountDb() { AccountName = "TestAccount" });
+				db.SaveChanges();
+            }
 
 			GameRoom room = RoomManager.Instance.Add(1); // 서버 시작할때 일단 게임룸 하나 추가, 맵 번호는 1번이라 가정
 			TickRoom(room, 50); // 생성된 room의 update가 50ms마다 한번씩 실행되도록 한다.
