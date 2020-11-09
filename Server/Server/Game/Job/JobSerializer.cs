@@ -9,34 +9,43 @@ namespace Server.Game
 {
     public class JobSerializer
     {
-		Queue<IJob> _jobQueue = new Queue<IJob>();
+		JobTimer _timer = new JobTimer(); // 미래(나중에) 실행되어야 하는 작업 (예약)
+		Queue<IJob> _jobQueue = new Queue<IJob>(); // 즉시 실행되어야 하는 작업
 		object _lock = new object();
 		bool _flush = false;
 
-		/// Helper Function
+		/// PushAfter Helper Function
 		// 외부에서는 Action으로 던져준다. Job을 직접 만들지는 않음
+		public void PushAfter(int tickAfter, Action action) { PushAfter(tickAfter, new Job(action)); }
+		public void PushAfter<T1>(int tickAfter, Action<T1> action, T1 t1) { PushAfter(tickAfter, new Job<T1>(action, t1)); }
+		public void PushAfter<T1, T2>(int tickAfter, Action<T1, T2> action, T1 t1, T2 t2) { PushAfter(tickAfter, new Job<T1, T2>(action, t1, t2)); }
+		public void PushAfter<T1, T2, T3>(int tickAfter, Action<T1, T2, T3> action, T1 t1, T2 t2, T3 t3) { PushAfter(tickAfter, new Job<T1, T2, T3>(action, t1, t2, t3)); }
+
+		public void PushAfter(int tickAfter, IJob job) // 작업을 예약한다
+		{
+			_timer.Push(job, tickAfter);
+		}
+
+		/// Push Helper Function
 		public void Push(Action action) { Push(new Job(action)); } 
 		public void Push<T1>(Action<T1> action, T1 t1) { Push(new Job<T1>(action, t1)); } 
 		public void Push<T1, T2>(Action<T1, T2> action, T1 t1, T2 t2) { Push(new Job<T1, T2>(action, t1, t2)); } 
 		public void Push<T1, T2, T3>(Action<T1, T2, T3> action, T1 t1, T2 t2, T3 t3) { Push(new Job<T1, T2, T3>(action, t1, t2, t3)); }
 
+		// Push는 작업 밀어넣는 일만 하도록
 		public void Push(IJob job)
 		{
-			bool flush = false; // 들어온애가 실행까지 맡을지 아닐지를 판단하는 부분
-
 			lock (_lock)
 			{
 				_jobQueue.Enqueue(job);
-				if (_flush == false) // 내가 가장 처음으로 들어왔다면?
-					flush = _flush = true; // 실행까지 할거야
 			}
-
-			if (flush)
-				Flush();
 		}
 
-		void Flush() // 일감처리
+		// 누가 Flush를 해줄까
+		public void Flush() // 일감처리
 		{
+			_timer.Flush();
+
 			while (true)
 			{
 				IJob job = Pop();

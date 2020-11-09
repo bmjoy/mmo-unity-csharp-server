@@ -30,12 +30,24 @@ namespace Server.Game
             // 임시 : 몬스터 생성
             Monster monster = ObjectManager.Instance.Add<Monster>();
             monster.CellPos = new Vector2Int(5, 5);
-            Push(EnterGame, monster);
+            EnterGame(monster);
+
+            TestTimer();
         }
+        
+        // Test
+        void TestTimer()
+        {
+            Console.WriteLine("TestTimer");
+            PushAfter(100, TestTimer); // JobTimer에 자신을 밀어넣음.
+        }
+
 
         // 클라는 1초당 120프렘정도 업댓함
         // 서버는 1초당 10번정도면 충분하다
         // 이거 누가 호출? -> 메인에서 돌리고 있다
+        // 누군가가 주기적으로 호출해줘야 하는 함수 -> Flush하기 좋음
+        // Update 호출 방식이 바뀌어서 기본적으로 50ms의 딜레이가 생겼다. 딜레이는 처음에 설정 가능
         public void Update()
         {
             foreach (Monster monster in _monsters.Values)
@@ -47,6 +59,8 @@ namespace Server.Game
             {
                 projectile.Update();
             }
+
+            Flush();
         }
 
         public void EnterGame(GameObject gameObject)

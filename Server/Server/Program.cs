@@ -16,10 +16,21 @@ namespace Server
 	class Program
 	{
 		static Listener _listener = new Listener();
-
-		static void FlushRoom()
+		static List<System.Timers.Timer> _timers = new List<System.Timers.Timer>();
+		
+		// Main 함수에서 While 안에 Update 돌릴때와 다른 점은
+		// 이제 update 작업을 main 함수를 작업하는 쓰레드만 하는게 아니라
+		// 다른 쓰레드들도 update 작업에 동원 될 수 있다.
+		static void TickRoom(GameRoom room, int tick = 1000)
 		{
-			JobTimer.Instance.Push(FlushRoom, 250);
+			var timer = new System.Timers.Timer();
+			timer.Interval = tick; // 몇(ms)마다 반복할지
+			timer.Elapsed += (s, e) => { room.Update(); }; // 반복할 작업
+			timer.AutoReset = true; // 작업 후 재실행 여부
+			timer.Enabled = true; // 실행
+
+			_timers.Add(timer); // 나중에 끄고싶을수도 있으니
+			// timer.Stop();
 		}
 
 		static void Main(string[] args)
@@ -29,7 +40,8 @@ namespace Server
 
 			var a = DataManager.StatDict;
 
-			RoomManager.Instance.Add(1); // 서버 시작할때 일단 게임룸 하나 추가, 맵 번호는 1번이라 가정
+			GameRoom room = RoomManager.Instance.Add(1); // 서버 시작할때 일단 게임룸 하나 추가, 맵 번호는 1번이라 가정
+			TickRoom(room, 50); // 생성된 room의 update가 50ms마다 한번씩 실행되도록 한다.
 
 			// DNS (Domain Name System)
 			string host = Dns.GetHostName();
@@ -48,8 +60,8 @@ namespace Server
 			while (true)
 			{
 				//JobTimer.Instance.Flush();
-				GameRoom room = RoomManager.Instance.Find(1);
-				room.Push(room.Update);
+				//GameRoom room = RoomManager.Instance.Find(1);
+				//room.Push(room.Update);
 				Thread.Sleep(100);
 			}
 		}
